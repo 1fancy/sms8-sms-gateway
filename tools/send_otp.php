@@ -16,17 +16,38 @@ ToolRegistry::register([
         'type' => 'object',
         'required' => ['phone'],
         'properties' => [
-            'phone'        => ['type' => 'string', 'description' => 'E.164 phone, e.g. +1234567890'],
-            'length'       => ['type' => 'integer', 'description' => 'Digits in the code (4-8). Default 6.'],
-            'template'     => ['type' => 'string', 'description' => 'SMS body with `{code}` placeholder. Default: "Your verification code is {code}".'],
-            'expires_in'   => ['type' => 'integer', 'description' => 'Seconds until expiry (60-900). Default 300.'],
-            'max_attempts' => ['type' => 'integer', 'description' => 'Verification attempts allowed (1-10). Default 5.'],
+            'phone'         => ['type' => 'string',  'description' => 'E.164 phone, e.g. +1234567890'],
+            'length'        => ['type' => 'integer', 'description' => 'Digits in the code (4-8). Default 6.'],
+            'template'      => ['type' => 'string',  'description' => 'SMS body with `{code}` placeholder. Default: "Your verification code is {code}".'],
+            'expires_in'    => ['type' => 'integer', 'description' => 'Seconds until expiry (60-900). Default 300.'],
+            'max_attempts'  => ['type' => 'integer', 'description' => 'Verification attempts allowed (1-10). Default 5.'],
+            'device_id'     => ['type' => 'integer', 'description' => 'Optional. Send through a specific paired device. Default: primary device.'],
+            'sim_slot'      => ['type' => 'string',  'description' => 'Optional. SIM slot ID on the chosen device (multi-SIM phones).'],
+            'devices'       => ['type' => 'array',   'description' => 'Optional. Explicit list of device IDs or "<deviceID>|<simSlot>" entries.', 'items' => ['type' => 'string']],
+            'option'        => ['type' => 'integer', 'description' => 'Optional. 0=use device_id/devices (default), 1=broadcast all devices, 2=broadcast all SIMs.', 'enum' => [0, 1, 2]],
+            'random_device' => ['type' => 'boolean', 'description' => 'Optional. If true, pick one random sender from the resolved list (load-balancing across devices/SIMs).'],
         ],
     ],
     'handler' => function(array $args, User $user): array {
-        // Forward to the real endpoint via an internal HTTP call so we keep
-        // a single source of truth for OTP logic (rate-limit, cleanup, …).
-        return _sms8_internal_post('/ajax/otp-send.php', array_merge($args, [
+        // Translate MCP-style arg names into otp-send.php's POST field names.
+        $forward = $args;
+        if (isset($args['device_id'])) {
+            // The endpoint takes a `devices` JSON list; build it from device_id+sim_slot
+            $entry = (string)(int)$args['device_id'];
+            if (!empty($args['sim_slot'])) {
+                $entry .= '|' . preg_replace('/[^A-Za-z0-9_-]/', '', (string)$args['sim_slot']);
+            }
+            $forward['devices'] = json_encode([$entry]);
+            unset($forward['device_id'], $forward['sim_slot']);
+        } elseif (isset($args['devices']) && is_array($args['devices'])) {
+            $forward['devices'] = json_encode($args['devices']);
+        }
+        if (isset($args['random_device'])) {
+            $forward['useRandomDevice'] = $args['random_device'] ? 1 : 0;
+            unset($forward['random_device']);
+        }
+
+        return _sms8_internal_post('/ajax/otp-send.php', array_merge($forward, [
             'api_key' => $user->getApiKey(),
         ]));
     },

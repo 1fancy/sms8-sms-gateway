@@ -68,6 +68,62 @@ The Bearer token is already configured in the MCP server's transport. You do not
 
 Call `setup_sms8` first — it returns a structured summary with their account info, device list, code samples, and dashboard links. Show the highlights from that response rather than re-listing capabilities from memory.
 
+## Auto-wrapping existing user code
+
+A common user request is to **wrap an existing flow with SMS** — e.g. *"send an SMS on user registration success"* or *"add OTP verification to the login route"*. In these cases:
+
+1. **Locate the relevant existing code** — grep for `register`, `signup`, `login`, `password reset`, `checkout`, `order_complete`, etc., depending on the prompt.
+2. **Identify the success path** — the place where the user/order/event is successfully persisted. SMS sends should happen AFTER that commit (so failed SMS doesn't roll back the registration).
+3. **Insert the SMS8 call** — re-use the user's existing HTTP client. Construct the request from `setup_sms8`'s `config.base_url` (read SMS8_API_KEY from env, don't hardcode the literal key).
+4. **Handle errors gracefully** — SMS failures are recoverable; never `throw` or roll back the parent transaction. Log + continue.
+
+### Example: "send SMS on registration success"
+
+If the user has a route like `POST /register`:
+
+```php
+// existing
+$user = User::create($input);
+$db->commit();
+
+// Add — wrap the success path
+$sms8 = getenv('SMS8_API_KEY');
+if ($sms8 && !empty($user->phone)) {
+    @file_get_contents(
+        'https://app.sms8.io/services/send.php',
+        false,
+        stream_context_create(['http' => [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\nAuthorization: Bearer $sms8",
+            'content' => http_build_query([
+                'number'  => $user->phone,
+                'message' => "Welcome to {$appName}! Your account is ready.",
+            ]),
+        ]])
+    );
+}
+```
+
+For Node/JS, use `fetch` to the same endpoint with `Authorization: Bearer ${process.env.SMS8_API_KEY}`. For Python, `requests.post(..., headers={'Authorization': f'Bearer {os.environ["SMS8_API_KEY"]}'})`.
+
+### Example: "wrap signup with phone verification"
+
+Two route changes:
+
+1. **`POST /signup`** — capture phone, then call `send_otp` (via MCP) instead of fully creating the account. Persist the phone+pending_user in a session, return "code sent".
+2. **`POST /verify-phone`** — call `verify_otp` (via MCP). If `verified: true`, create the account from the session and log them in. If false, render the error using `reason` and `attempts_left` from the response.
+
+The MCP server enforces rate limits automatically — don't re-implement them in the user's code.
+
+### What NOT to do
+
+- **Never paste the literal API key into source files.** Read from `SMS8_API_KEY` env var.
+- **Never wrap with `try/catch` that aborts the parent flow** when SMS fails. SMS is a side-effect, not a precondition.
+- **Don't hardcode device IDs** unless the user explicitly asks. The server falls back to the primary device automatically.
+- **Don't put the API key in URL query strings.** Always use the `Authorization: Bearer` header or POST body.
+
+---
+
 ## Common gotchas
 
 - **No device paired** → `send_sms` returns "No active device". Send the user to <https://app.sms8.io/devices.php> with the pairing QR.
