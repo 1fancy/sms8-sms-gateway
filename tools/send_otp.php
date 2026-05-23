@@ -11,7 +11,7 @@
  */
 ToolRegistry::register([
     'name' => 'send_otp',
-    'description' => 'Send a one-time verification code to a phone number. Stores the code server-side; verify later with verify_otp. 5-minute expiry, 5 attempts, 60-second resend cooldown by default.',
+    'description' => 'Send a one-time verification code to a phone number. Stores the code server-side; verify later with verify_otp. 5-minute expiry, 5 attempts, 60-second resend cooldown by default. Hard per-phone cap of 5 OTPs per 24h.',
     'inputSchema' => [
         'type' => 'object',
         'required' => ['phone'],
@@ -19,8 +19,8 @@ ToolRegistry::register([
             'phone'        => ['type' => 'string', 'description' => 'E.164 phone, e.g. +1234567890'],
             'length'       => ['type' => 'integer', 'description' => 'Digits in the code (4-8). Default 6.'],
             'template'     => ['type' => 'string', 'description' => 'SMS body with `{code}` placeholder. Default: "Your verification code is {code}".'],
-            'expires_in'   => ['type' => 'integer', 'description' => 'Seconds until expiry (30-1800). Default 300.'],
-            'max_attempts' => ['type' => 'integer', 'description' => 'Verification attempts allowed (1-20). Default 5.'],
+            'expires_in'   => ['type' => 'integer', 'description' => 'Seconds until expiry (60-900). Default 300.'],
+            'max_attempts' => ['type' => 'integer', 'description' => 'Verification attempts allowed (1-10). Default 5.'],
         ],
     ],
     'handler' => function(array $args, User $user): array {
