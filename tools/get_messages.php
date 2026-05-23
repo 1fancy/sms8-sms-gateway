@@ -27,28 +27,41 @@ ToolRegistry::register([
         ],
     ],
     'handler' => function(array $args, User $user): array {
-        $direction = $args['direction'] ?? 'all';
+        $direction = in_array(($args['direction'] ?? 'all'), ['all','received','sent'], true)
+            ? ($args['direction'] ?? 'all')
+            : 'all';
         $limit     = max(1, min(100, (int)($args['limit'] ?? 25)));
-        $phone     = $args['phone']     ?? null;
+        $phone     = isset($args['phone']) ? (string)$args['phone'] : '';
 
-        $where = ['userID = ' . (int)$user->getID()];
-        if ($direction === 'received') $where[] = "status = 'Received'";
-        if ($direction === 'sent')     $where[] = "status IN ('Sent','Delivered','Queued','Pending')";
-        if ($phone !== '' && $phone !== null) {
-            $clean = cleanPhoneNumber($phone);
-            $where[] = "number = '" . addslashes($clean) . "'";
+        // Parameterised query — bind every user-controlled value
+        $sql    = "SELECT ID, number, message, status, sentDate, deliveredDate, type
+                   FROM Message
+                   WHERE userID = ?";
+        $params = [(int)$user->getID()];
+
+        if ($direction === 'received') {
+            $sql .= " AND status = ?";
+            $params[] = 'Received';
+        } elseif ($direction === 'sent') {
+            $sql .= " AND status IN (?, ?, ?, ?)";
+            array_push($params, 'Sent', 'Delivered', 'Queued', 'Pending');
         }
-        $sql = "SELECT ID, number, message, status, sentDate, deliveredDate, type
-                FROM Message
-                WHERE " . implode(' AND ', $where) . "
-                ORDER BY ID DESC
-                LIMIT " . $limit;
+
+        if ($phone !== '') {
+            $clean = cleanPhoneNumber($phone);
+            if ($clean !== '') {
+                $sql .= " AND number = ?";
+                $params[] = $clean;
+            }
+        }
+        // $limit is an int already; safe to interpolate
+        $sql .= " ORDER BY ID DESC LIMIT " . $limit;
 
         // Read on latin1 connection — Message.message stores raw UTF-8 bytes
         // in a latin1 column, same trick used everywhere else in the app.
         $db = MysqliDb::getInstance();
         $db->rawQuery("SET NAMES latin1");
-        $rows = $db->rawQuery($sql) ?: [];
+        $rows = $db->rawQuery($sql, $params) ?: [];
         $db->rawQuery("SET NAMES utf8mb4");
 
         return [

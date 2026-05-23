@@ -15,7 +15,7 @@
  *   The main-app path is configurable via the SMS8_APP_PATH env var; the
  *   default matches our standard deployment.
  *
- * Repo:    https://github.com/1fancy/sms8-mcp
+ * Repo:    https://github.com/1fancy/sms8-sms-gateway
  * Docs:    https://mcp.sms8.io
  * Contact: hello@sms8.io
  */
@@ -42,11 +42,26 @@ foreach (glob(__DIR__ . '/tools/*.php') as $f) require_once $f;
 
 // ── Dispatch ──────────────────────────────────────────────────────────────
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS, GET');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Key');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
+// CORS: MCP is intended to be called from AI tools (Claude Code, Cursor, …)
+// running locally — NOT from arbitrary web pages. We allow CORS only for the
+// public discovery methods (initialize, tools/list, ping) and for OPTIONS
+// preflights; tools/call is intentionally non-CORS so a malicious web page
+// can't trigger SMS sends even if the user pasted their API key somewhere.
+//
+// IDE-side MCP clients send requests server-to-server (no browser preflight
+// involved), so this restriction doesn't affect them.
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$isOptions = ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS';
+
+if ($isOptions) {
+    // Preflight: only advertise that discovery is allowed.
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Key');
+    header('Access-Control-Max-Age: 600');
+    exit;
+}
 
 // Friendly landing page on GET — humans hitting mcp.sms8.io in a browser
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -55,4 +70,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-JsonRpc::handle();
+// Peek at the JSON-RPC method to decide whether to set CORS headers for the
+// actual response. This runs BEFORE JsonRpc::handle() reads the same body —
+// JsonRpc rewinds php://input internally so this is safe.
+$raw    = file_get_contents('php://input') ?: '';
+$peeked = json_decode($raw, true);
+$method = '';
+if (is_array($peeked)) {
+    if (isset($peeked['method'])) {
+        $method = (string)$peeked['method'];
+    } elseif (isset($peeked[0]['method'])) {
+        // batched — be conservative and require ALL methods to be safe
+        $method = '';
+        $allSafe = true;
+        foreach ($peeked as $sub) {
+            $m = $sub['method'] ?? '';
+            if (!in_array($m, ['initialize', 'tools/list', 'ping'], true)) { $allSafe = false; break; }
+        }
+        if ($allSafe) $method = 'initialize'; // any safe value
+    }
+}
+$publicMethod = in_array($method, ['initialize', 'tools/list', 'ping'], true);
+if ($publicMethod && $origin !== '') {
+    header('Access-Control-Allow-Origin: *');
+    header('Vary: Origin');
+}
+// For tools/call (and anything else) — no CORS headers, browsers will block
+// the response from being read by a malicious origin.
+
+JsonRpc::handle($raw);

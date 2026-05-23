@@ -70,9 +70,15 @@ ToolRegistry::register([
 
         $base = 'https://app.sms8.io';
 
+        // Never echo the full api_key back. AI tools often log entire tool
+        // responses; the raw key would leak into Cursor/Claude history and any
+        // shared transcripts. Return a fingerprint instead.
+        $tail = substr($key, -4);
+        $masked = str_repeat('•', max(0, strlen($key) - 4)) . $tail;
+
         return [
             'success' => true,
-            'message' => 'SMS8 ready. Use the credentials below to generate integration code.',
+            'message' => 'SMS8 ready. Read the user\'s API key from their SMS8_API_KEY environment variable when generating code — do not paste it into source files or logs.',
             'account' => [
                 'user_id'    => $u->getID(),
                 'name'       => $u->getName(),
@@ -83,13 +89,14 @@ ToolRegistry::register([
             ],
             'devices' => $devices,
             'config'  => [
-                'base_url'  => $base,
-                'api_key'   => $key,
+                'base_url'        => $base,
+                'api_key_masked'  => $masked,
+                'api_key_source'  => 'Read from the SMS8_API_KEY environment variable. Get the raw key at ' . $base . '/api.php',
                 'env_hints' => [
                     'SMS8_BASE_URL' => $base,
-                    'SMS8_API_KEY'  => $key,
+                    'SMS8_API_KEY'  => 'set this in your shell env or .env file; do not paste the literal key into code',
                 ],
-                'note' => 'Store SMS8_API_KEY in your environment, never commit it to git.',
+                'note' => 'For security, this response only includes the last 4 chars of your key. The AI assistant should reference the env var, never embed the key in source files.',
             ],
             'endpoints' => [
                 'send_sms'   => ['method' => 'POST', 'url' => "$base/api.php?action=send"],
@@ -114,10 +121,10 @@ ToolRegistry::register([
                     : 'You have ' . count($devices) . ' paired device(s). Call `send_sms` or `send_otp` to start sending.',
             ],
             'integration_examples' => [
-                'php_send' => 'See examples/php-send.php on https://github.com/1fancy/sms8-mcp',
-                'js_fetch' => 'See examples/js-fetch.js on https://github.com/1fancy/sms8-mcp',
-                'otp_flow' => 'See examples/otp-flow.php on https://github.com/1fancy/sms8-mcp',
-                'webhook'  => 'See examples/webhook-handler.php on https://github.com/1fancy/sms8-mcp',
+                'php_send' => 'See examples/php-send.php on https://github.com/1fancy/sms8-sms-gateway',
+                'js_fetch' => 'See examples/js-fetch.js on https://github.com/1fancy/sms8-sms-gateway',
+                'otp_flow' => 'See examples/otp-flow.php on https://github.com/1fancy/sms8-sms-gateway',
+                'webhook'  => 'See examples/webhook-handler.php on https://github.com/1fancy/sms8-sms-gateway',
             ],
         ];
     },

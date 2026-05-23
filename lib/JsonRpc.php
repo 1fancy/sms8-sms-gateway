@@ -15,9 +15,11 @@
  */
 class JsonRpc
 {
-    public static function handle(): void
+    public static function handle(?string $raw = null): void
     {
-        $raw = file_get_contents('php://input');
+        if ($raw === null) {
+            $raw = file_get_contents('php://input');
+        }
         $req = json_decode($raw, true);
         if (!is_array($req)) {
             self::respond(null, ['error' => ['code' => -32700, 'message' => 'Parse error']]);
