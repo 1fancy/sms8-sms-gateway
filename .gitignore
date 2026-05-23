@@ -1,0 +1,23 @@
+# Local environment — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+config.local.php
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Runtime
+*.log
+/logs/
+
+# Dependencies (we don't ship a vendor — the server reuses app.sms8.io/vendor)
+vendor/
+node_modules/

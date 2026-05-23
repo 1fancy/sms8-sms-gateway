@@ -1,0 +1,16 @@
+Options -Indexes
+RewriteEngine On
+
+# All MCP traffic enters through index.php (JSON-RPC dispatcher).
+# GET shows the landing page; POST runs the protocol.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ index.php [L,QSA]
+
+# Deny direct access to PHP files outside index.php
+<FilesMatch "\.(env|md|sh|gitignore|gitattributes)$">
+    Require all denied
+</FilesMatch>
+
+# Deny browsing of lib/ and tools/ source files
+RedirectMatch 403 ^/(lib|tools)(/|$)

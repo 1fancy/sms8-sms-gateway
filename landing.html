@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMS8 MCP — Add SMS, OTP & Webhooks to Claude, Cursor, Windsurf</title>
+<meta name="description" content="The official Model Context Protocol server for SMS8. Plug unlimited SMS, OTP verification, and webhooks into Claude Code, Cursor, Windsurf, and any AI coding tool — using your own Android phone as the gateway.">
+<meta name="keywords" content="mcp server, model context protocol, claude code sms, cursor sms, windsurf sms, sms api, otp api, sms8, twilio alternative, android sms gateway, ai sms integration">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://mcp.sms8.io">
+<meta property="og:title" content="SMS8 MCP — SMS & OTP for AI Coding Tools">
+<meta property="og:description" content="The official MCP server for SMS8. Plug unlimited SMS + OTP into Claude, Cursor, Windsurf in 60 seconds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mcp.sms8.io">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after { box-sizing: border-box; margin:0; padding:0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: 'Inter','Inter Fallback',-apple-system,sans-serif;
+  background: #0a0a14;
+  color: #e8e8f0;
+  line-height: 1.6;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(124,58,237,0.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 90%, rgba(168,85,247,0.14) 0%, transparent 45%);
+}
+a { color: #a78bfa; text-decoration: none; }
+a:hover { color: #c4b5fd; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 60px 24px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(124,58,237,0.15); color: #c4b5fd;
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.tag::before { content:''; width:6px; height:6px; border-radius:50%; background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,0.25); }
+h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.03em;
+  line-height: 1.05; margin-bottom: 18px;
+}
+.gradient {
+  background: linear-gradient(135deg,#a78bfa 0%,#7c3aed 50%,#ec4899 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.lede { font-size: 1.18rem; color: #b8b8c8; max-width: 720px; margin-bottom: 36px; }
+.cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #fff; color: #0a0a14;
+  padding: 12px 22px; border-radius: 10px;
+  font-weight: 700; font-size: 15px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(255,255,255,0.15); color:#0a0a14; }
+.cta-secondary {
+  background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2);
+}
+.cta-secondary:hover { color:#fff; background: rgba(255,255,255,0.06); }
+.ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 56px; }
+section { margin-bottom: 56px; }
+h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+h2 .gradient { font-weight: 800; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 18px;
+}
+.card h3 { font-size: 0.92rem; font-weight: 700; color: #a78bfa; letter-spacing: 0; margin-bottom: 6px; font-family: ui-monospace,monospace; }
+.card p { font-size: 0.9rem; color: #b8b8c8; }
+pre {
+  background: #050510; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 18px;
+  overflow-x: auto; font-size: 0.85rem; line-height: 1.5;
+  font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+  color: #d8d8e8;
+}
+.k { color: #a78bfa; }
+.s { color: #6ee7b7; }
+ul.steps { list-style: none; padding-left: 0; counter-reset: step; }
+ul.steps li { counter-increment: step; padding-left: 38px; position: relative; margin-bottom: 14px; color: #b8b8c8; }
+ul.steps li::before {
+  content: counter(step); position: absolute; left: 0; top: -2px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: linear-gradient(135deg,#7c3aed,#a855f7);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+}
+footer {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 60px; padding-top: 24px;
+  font-size: 13px; color: #7c7c8e;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="tag">MCP Server · live</span>
+  <h1>SMS, OTP & webhooks for<br><span class="gradient">AI coding tools</span></h1>
+  <p class="lede">
+    The official <strong>Model Context Protocol</strong> server for SMS8.io.
+    Plug unlimited SMS, OTP verification, and inbound webhooks into
+    <strong>Claude Code, Cursor, Windsurf</strong>, or any MCP-compatible AI assistant —
+    using your own Android phone as the gateway. No A2P 10DLC. No per-message fees. 60-second setup.
+  </p>
+
+  <div class="ctas">
+    <a class="cta" href="https://app.sms8.io" target="_blank">Get your free API key →</a>
+    <a class="cta cta-secondary" href="https://github.com/1fancy/sms8-mcp" target="_blank">View on GitHub</a>
+  </div>
+
+  <section>
+    <h2>Connect in <span class="gradient">60 seconds</span></h2>
+    <ul class="steps">
+      <li>Sign up at <a href="https://app.sms8.io">app.sms8.io</a> (5-day free trial, no credit card).</li>
+      <li>Pair your Android phone via QR — the SMS8 app turns it into a gateway.</li>
+      <li>Copy your API key from <strong>Profile → API</strong>.</li>
+      <li>Add the MCP server to your AI tool's config (below) and start coding.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>MCP config</h2>
+    <pre>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"sms8"</span>: {
+      <span class="k">"url"</span>: <span class="s">"https://mcp.sms8.io"</span>,
+      <span class="k">"transport"</span>: <span class="s">"http"</span>,
+      <span class="k">"headers"</span>: {
+        <span class="k">"Authorization"</span>: <span class="s">"Bearer YOUR_SMS8_API_KEY"</span>
+      }
+    }
+  }
+}</pre>
+  </section>
+
+  <section>
+    <h2>What your AI agent can do</h2>
+    <div class="cards">
+      <div class="card"><h3>setup_sms8</h3><p>One handshake → full integration context, code samples, dashboard links.</p></div>
+      <div class="card"><h3>send_sms</h3><p>Send one SMS through the user's paired Android.</p></div>
+      <div class="card"><h3>send_otp / verify_otp</h3><p>Drop-in phone verification with sane defaults.</p></div>
+      <div class="card"><h3>get_messages</h3><p>Recent inbox / sent — for delivery checks and reply flows.</p></div>
+      <div class="card"><h3>list_devices</h3><p>What phones are paired? Pick a sender device.</p></div>
+      <div class="card"><h3>create_webhook</h3><p>Register a callback for inbound SMS + delivery events.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Try it now (cURL)</h2>
+    <pre>curl https://mcp.sms8.io \
+  -H <span class="s">"Authorization: Bearer YOUR_SMS8_API_KEY"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"setup_sms8"}}'</span></pre>
+  </section>
+
+  <footer>
+    <span>© SMS8.io — Convert your Android phone to an SMS gateway.</span>
+    <span><a href="https://sms8.io">sms8.io</a> · <a href="https://github.com/1fancy/sms8-mcp">github</a> · <a href="mailto:hello@sms8.io">contact</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
