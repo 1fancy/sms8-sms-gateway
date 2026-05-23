@@ -45,9 +45,9 @@ Sign up at **[app.sms8.io](https://app.sms8.io)** — 5-day free trial, no credi
 
 ### 2 · Connect the MCP to your AI tool
 
-#### Claude Code / Cursor / Windsurf
+Three ways — pick the one that matches your tool.
 
-Add this to your MCP config:
+#### Option A · Hosted HTTP (Claude Code, Cursor, Windsurf)
 
 ```json
 {
@@ -62,6 +62,35 @@ Add this to your MCP config:
   }
 }
 ```
+
+#### Option B · Claude Code plugin (one command)
+
+```
+/plugin marketplace add 1fancy/sms8-sms-gateway
+/plugin install sms8-sms-gateway
+```
+
+Then set `SMS8_API_KEY=sk_xxx` in your shell environment before launching Claude Code. The plugin ships a Skill that teaches Claude when to invoke SMS8 tools, plus the HTTP MCP server config — no JSON to copy.
+
+#### Option C · `npx` (any stdio-MCP client)
+
+```json
+{
+  "mcpServers": {
+    "sms8": {
+      "command": "npx",
+      "args": ["-y", "@sms8/mcp"],
+      "env": { "SMS8_API_KEY": "sk_your_key" }
+    }
+  }
+}
+```
+
+#### Full setup wizard
+
+The fastest path is the in-app wizard — pre-fills your API key, copy-buttons per tool, and a "send first test SMS" form. Open it at:
+
+> **<https://app.sms8.io/mcp-setup.php>**
 
 ### 3 · Tell your AI to use it
 
@@ -105,7 +134,7 @@ The MCP server enforces:
 The hosted server at **`mcp.sms8.io`** is free — but if you want to run your own:
 
 ```bash
-git clone https://github.com/1fancy/sms8-mcp.git
+git clone https://github.com/1fancy/sms8-sms-gateway.git
 cd sms8-mcp
 export SMS8_APP_PATH=/path/to/your/sms8-install   # the main SMS8 PHP app
 php -S 127.0.0.1:8080 index.php

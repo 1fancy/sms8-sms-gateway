@@ -1,0 +1,43 @@
+{
+  "name": "@sms8/mcp",
+  "version": "1.0.0",
+  "description": "SMS8 MCP launcher — connects Claude Code, Cursor, Windsurf and other AI coding tools to https://mcp.sms8.io. Send SMS, OTPs, and webhooks from your AI assistant.",
+  "type": "module",
+  "bin": {
+    "sms8-mcp": "bin/sms8-mcp.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "claude-code",
+    "cursor",
+    "windsurf",
+    "sms",
+    "otp",
+    "sms-gateway",
+    "sms8",
+    "twilio-alternative",
+    "ai",
+    "vibe-coding"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://mcp.sms8.io",
+  "author": "SMS8.io",
+  "license": "MIT"
+}

@@ -12,5 +12,5 @@ RewriteRule ^.*$ index.php [L,QSA]
     Require all denied
 </FilesMatch>
 
-# Deny browsing of lib/ and tools/ source files
-RedirectMatch 403 ^/(lib|tools)(/|$)
+# Deny browsing of source dirs (server is only accessed via index.php)
+RedirectMatch 403 ^/(lib|tools|npm|skills|\.claude-plugin)(/|$)

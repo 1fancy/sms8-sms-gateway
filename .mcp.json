@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sms8": {
+      "type": "http",
+      "url": "https://mcp.sms8.io",
+      "headers": {
+        "Authorization": "Bearer ${SMS8_API_KEY}"
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "sms8-sms-gateway",
+  "version": "1.0.0",
+  "description": "Send SMS, OTPs, and webhooks from Claude Code using your own Android phone as the gateway. Twilio alternative — no per-message fees, no A2P 10DLC.",
+  "author": "SMS8.io",
+  "homepage": "https://mcp.sms8.io",
+  "repository": "https://github.com/1fancy/sms8-sms-gateway",
+  "license": "MIT",
+  "keywords": [
+    "sms",
+    "otp",
+    "twilio-alternative",
+    "android-sms-gateway",
+    "mcp",
+    "messaging",
+    "phone-verification"
+  ]
+}
