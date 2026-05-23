@@ -1,53 +1,49 @@
-# SMS8 MCP Server — Add SMS, OTP & Webhooks to Any AI Coding Tool
+# SMS8 MCP Server — SMS, OTP & Webhooks for Claude Code, Cursor & Any AI Coding Tool
 
-> The official **Model Context Protocol** server for [SMS8.io](https://sms8.io) — the unlimited-SMS gateway that uses your own Android phone.
->
-> Plug SMS8 into **Claude Code, Cursor, Windsurf, Codex, Devin** or any MCP-compatible AI coding assistant. Your AI agent can now send SMS, verify phone numbers with OTP, manage devices, and wire up webhooks — directly from your IDE, in any project.
+> **The official Model Context Protocol (MCP) server for sending SMS, one-time passwords (OTPs), and webhooks from AI coding tools like Claude Code, Cursor, Windsurf, Codex, and Devin.** Use your own Android phone as the gateway — no Twilio, no A2P 10DLC, no per-message fees.
 
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-2024--11--05-7c3aed)](https://modelcontextprotocol.io)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-cc6600)](https://claude.com/claude-code)
+[![Cursor](https://img.shields.io/badge/Cursor-Compatible-000)](https://cursor.com)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Built with PHP](https://img.shields.io/badge/built%20with-PHP%208-777BB4)](https://php.net)
+[![PHP](https://img.shields.io/badge/built%20with-PHP%208-777BB4)](https://php.net)
+[![GitHub Stars](https://img.shields.io/github/stars/1fancy/sms8-sms-gateway?style=social)](https://github.com/1fancy/sms8-sms-gateway)
+
+**Live server:** [`https://mcp.sms8.io`](https://mcp.sms8.io)
+**Dashboard:** [`https://app.sms8.io`](https://app.sms8.io)
+**Marketing:** [`https://sms8.io`](https://sms8.io)
 
 ---
 
-## 🚀 Why this exists
+## What this MCP does, in one sentence
 
-If you're a vibe coder using AI tools to ship apps fast, you've probably hit this wall:
+Lets an AI coding assistant send real SMS messages, issue and verify one-time passwords (OTPs), and register webhooks — using **your own paired Android phone as the SMS gateway**, controlled through the SMS8 platform.
 
-> *"I want my AI assistant to add SMS notifications to my app. But Twilio's docs are 40 pages, A2P 10DLC takes weeks to register, and I just want it to work."*
+## Why developers pick SMS8 over Twilio for AI-built apps
 
-**SMS8 MCP fixes that.** One install, one tool call, and your AI generates production-ready SMS code using **your own Android phone as the gateway** — no carrier registration, no per-message fees, no waiting.
-
-## ✨ What this MCP gives your AI agent
-
-| Tool | What it does |
-|------|--------------|
-| `setup_sms8` | One-shot handshake: validate API key, fetch devices, return endpoints + code samples + dashboard links |
-| `send_sms` | Send a single SMS through the user's paired Android |
-| `send_otp` | Generate + send a 6-digit verification code (5-min expiry, configurable) |
-| `verify_otp` | Confirm a user-typed code |
-| `get_messages` | Read the inbox / sent items — for delivery checks, reply flows, debugging |
-| `list_devices` | List paired Android devices |
-| `create_webhook` | Register a callback URL for inbound SMS + delivery events |
-
-All tools re-use the existing SMS8 API — credits, retries, multi-device routing, and webhooks behave identically to a direct API call.
+| Feature | SMS8 MCP | Twilio | MessageBird |
+|---|---|---|---|
+| MCP server (works in Claude Code, Cursor, Windsurf) | **Yes — built-in** | No | No |
+| Per-message fees | **None** (flat plan) | $0.0079+ per SMS | $0.05+ per SMS |
+| A2P 10DLC registration required | **No** | Yes (weeks) | Yes |
+| Phone-number provisioning required | **No** (uses your phone) | Yes ($1+/month) | Yes |
+| Setup time | **60 seconds** | Days to weeks |  Days |
+| Open-source MCP server | **Yes** ([this repo](https://github.com/1fancy/sms8-sms-gateway)) | No | No |
+| Works with personal SIM card | **Yes** | No | No |
+| OTP verification built-in | **Yes — `send_otp` + `verify_otp` tools** | Verify API extra cost | Verify API extra cost |
 
 ---
 
-## 🏃 Quick start (60 seconds)
+## Quick start (60 seconds)
 
-### 1 · Get a free SMS8 account
+### 1. Get a free SMS8 account
+- Sign up at [`app.sms8.io`](https://app.sms8.io) — 5-day trial, no credit card.
+- Install the [SMS8 Android app](https://app.sms8.io/devices.php), pair your phone via QR.
+- Copy your API key from **Profile → API**.
 
-Sign up at **[app.sms8.io](https://app.sms8.io)** — 5-day free trial, no credit card. Then:
+### 2. Pick your install method
 
-1. Install the [SMS8 Android app](https://app.sms8.io/devices.php) and pair via QR
-2. Open **Profile → API** and copy your API key
-
-### 2 · Connect the MCP to your AI tool
-
-Three ways — pick the one that matches your tool.
-
-#### Option A · Hosted HTTP (Claude Code, Cursor, Windsurf)
+#### Option A · Hosted HTTP (recommended — works in Claude Code, Cursor, Windsurf)
 
 ```json
 {
@@ -65,14 +61,14 @@ Three ways — pick the one that matches your tool.
 
 #### Option B · Claude Code plugin (one command)
 
-```
+```bash
 /plugin marketplace add 1fancy/sms8-sms-gateway
 /plugin install sms8-sms-gateway
 ```
 
-Then set `SMS8_API_KEY=sk_xxx` in your shell environment before launching Claude Code. The plugin ships a Skill that teaches Claude when to invoke SMS8 tools, plus the HTTP MCP server config — no JSON to copy.
+Then `export SMS8_API_KEY=sk_xxx` in your shell before launching Claude Code.
 
-#### Option C · `npx` (any stdio-MCP client)
+#### Option C · `npx` for stdio-MCP clients
 
 ```json
 {
@@ -88,111 +84,201 @@ Then set `SMS8_API_KEY=sk_xxx` in your shell environment before launching Claude
 
 #### Full setup wizard
 
-The fastest path is the in-app wizard — pre-fills your API key, copy-buttons per tool, and a "send first test SMS" form. Open it at:
+For copy-paste configs prefilled with your API key, the QR for device pairing, and a live "send test SMS" form, open the in-app wizard:
 
 > **<https://app.sms8.io/mcp-setup.php>**
 
-### 3 · Tell your AI to use it
+### 3. Ask your AI to send something
 
-> *"Add SMS verification to my signup flow using SMS8"*
+> *"Add SMS verification to my signup flow using the sms8 MCP."*
 
-Your AI will call `setup_sms8`, get all the context it needs, and write code that just works.
-
----
-
-## 📦 Drop-in code examples
-
-Each example in [`examples/`](examples/) is **production-ready, zero-dependency, copy-paste-able code** — what the AI agent generates after a `setup_sms8` call:
-
-- [`php-send.php`](examples/php-send.php) — Minimal PHP `Sms8Sender` class
-- [`js-fetch.js`](examples/js-fetch.js) — Node / browser / Cloudflare Worker client
-- [`otp-flow.php`](examples/otp-flow.php) — Complete phone-verification flow (signup-start + verify)
-- [`webhook-handler.php`](examples/webhook-handler.php) — Inbound SMS handler with signature verification
+Your AI will call `setup_sms8`, get the account context it needs, and write production-ready integration code that works on the first try.
 
 ---
 
-## 🔐 Security & secrets
+## What your AI can do (7 tools)
 
-**Never commit your API key.** This repo contains zero secrets — all credentials live in environment variables or your AI tool's MCP config:
+| Tool | Purpose | When the AI invokes it |
+|---|---|---|
+| `setup_sms8` | Validate API key, return account + devices + integration context | Once per session, before code generation |
+| `send_sms` | Send a single SMS through your paired Android phone | Notifications, alerts, transactional messaging |
+| `send_otp` | Generate and send a verification code | Sign-up phone verification, 2FA, password reset |
+| `verify_otp` | Compare a user-typed code against the latest issued OTP | After the user enters the code |
+| `get_messages` | Fetch recent inbox / sent SMS | Reply flows, delivery checks, debugging |
+| `list_devices` | List paired Android devices | Pick which phone to send from |
+| `create_webhook` | Register a callback URL for inbound SMS + delivery events | Wire up bi-directional SMS, status updates |
 
-```bash
-SMS8_API_KEY=sk_…       # from app.sms8.io → Profile → API
-SMS8_WEBHOOK_SECRET=…    # from app.sms8.io → Webhook
+Every tool re-uses the existing SMS8 send pipeline — credits, retries, multi-device routing, and webhook signing behave identically to a direct API call.
+
+---
+
+## Use cases (real prompts you can paste into Claude Code)
+
+### Add phone verification to a sign-up form
+```
+Wire phone-number verification into this app using the sms8 MCP. Use send_otp on
+the /signup endpoint, store the phone in the session, then verify_otp on the
+/verify-phone endpoint. Render an error if the OTP is wrong; show the remaining
+attempts count.
 ```
 
-The MCP server enforces:
+### Send transactional SMS notifications
+```
+When a new order is placed, send the customer an SMS confirmation via the sms8
+MCP. Use the order ID + tracking link in the message body.
+```
 
-- Per-key rate limiting (inherits from the main SMS8 API)
-- SSRF guards on `create_webhook` (no loopback / RFC1918 / metadata addresses)
-- HMAC-SHA256 webhook signatures (`X-SMS8-Signature`)
-- Per-OTP attempt limits + 5-minute expiry + 60-second resend cooldown
+### Build a two-way SMS support inbox
+```
+Use the sms8 MCP to register a webhook at https://my-app.com/sms-inbox. Scaffold
+a webhook handler that verifies the HMAC-SHA256 signature, then routes inbound
+SMS to the support queue in our database.
+```
+
+### SMS-based passwordless login
+```
+Replace the email magic-link login with SMS one-time codes using the sms8 MCP.
+Use a 6-digit code, 5-minute expiry, 5 attempts. Apply the existing rate limits.
+```
 
 ---
 
-## 🛠 Self-hosting (optional)
+## Drop-in code examples
 
-The hosted server at **`mcp.sms8.io`** is free — but if you want to run your own:
+Each example in [`examples/`](examples/) is production-ready, zero-dependency, and copy-paste-able — what the AI generates after a `setup_sms8` handshake:
+
+- **[`php-send.php`](examples/php-send.php)** — Minimal PHP `Sms8Sender` class with `send()`, `sendOtp()`, `verifyOtp()`
+- **[`js-fetch.js`](examples/js-fetch.js)** — Node / browser / Cloudflare Worker client (ESM + CommonJS)
+- **[`otp-flow.php`](examples/otp-flow.php)** — Complete phone-verification flow (`startSignup` + `verifySignup`)
+- **[`webhook-handler.php`](examples/webhook-handler.php)** — Inbound SMS handler with HMAC signature verification
+
+---
+
+## Frequently Asked Questions
+
+### What is the SMS8 MCP server?
+
+The SMS8 MCP server is an HTTPS endpoint at `mcp.sms8.io` that implements the [Model Context Protocol](https://modelcontextprotocol.io) so AI coding tools (Claude Code, Cursor, Windsurf, etc.) can send SMS, issue OTPs, and configure webhooks on behalf of a developer. It bridges the AI's tool-calling capability to the SMS8 SMS gateway, which uses your own Android phone as the SMS transport.
+
+### How is this different from Twilio?
+
+SMS8 routes SMS through a paired Android device using your existing SIM card, so there are no per-message carrier fees, no A2P 10DLC registration, and no phone number to provision. You pay one flat plan and send unlimited SMS. The MCP server exposes 7 tools an AI assistant can call directly — Twilio has no equivalent MCP integration.
+
+### Does this work with Claude Code?
+
+Yes. Add the MCP server to `~/.config/claude/mcp-servers.json` with the HTTP transport pointing at `https://mcp.sms8.io` and your SMS8 API key as a Bearer token. Or use `/plugin marketplace add 1fancy/sms8-sms-gateway` for the one-command install that bundles an MCP Skill teaching Claude when to invoke each tool.
+
+### Does this work with Cursor and Windsurf?
+
+Yes. Both support HTTP MCP servers. Add `https://mcp.sms8.io` with your API key as a Bearer header to `~/.cursor/mcp.json` (Cursor) or `~/.codeium/windsurf/mcp_config.json` (Windsurf). The [`/mcp-setup.php`](https://app.sms8.io/mcp-setup.php) wizard in the SMS8 dashboard prefills the configs per tool.
+
+### Is the source code public?
+
+Yes — MIT-licensed. The entire server, all 7 tool implementations, the npm launcher, the Claude Code plugin manifest, and 4 production-ready code examples live in [this repo](https://github.com/1fancy/sms8-sms-gateway).
+
+### What happens to my API key?
+
+Your API key authenticates each MCP tool call via an `Authorization: Bearer` header (or `X-Api-Key`). The hosted server validates it against your SMS8 account, then routes the call through the existing SMS8 send pipeline. The `setup_sms8` tool deliberately returns only the **last 4 characters** of your key so it never leaks into AI chat history or logs.
+
+### Is this safe to use in production?
+
+Yes. Server-side defences include:
+- Per-key rate limiting (inherits SMS8 API limits)
+- **Hard cap: 5 OTPs per phone number per 24h** (not user-configurable)
+- Resend cooldown 30–600s (default 60s)
+- Verify endpoint requires POST; rejects GET; ignores cookies
+- Transaction-wrapped check+insert to defeat race conditions
+- HMAC-SHA256 webhook signatures
+- SSRF block list on `create_webhook` (RFC1918, CGNAT, link-local, IPv4-mapped IPv6, DNS-resolved hosts)
+- CORS only advertised for discovery methods; `tools/call` deliberately omits CORS headers
+
+### Can I self-host the MCP server?
+
+Yes. Clone the repo, point `SMS8_APP_PATH` at your SMS8 install, and run:
 
 ```bash
 git clone https://github.com/1fancy/sms8-sms-gateway.git
-cd sms8-mcp
-export SMS8_APP_PATH=/path/to/your/sms8-install   # the main SMS8 PHP app
+cd sms8-sms-gateway
+export SMS8_APP_PATH=/path/to/your/sms8-install
 php -S 127.0.0.1:8080 index.php
 ```
 
-Point your AI tool at `http://127.0.0.1:8080`.
+The hosted server at `mcp.sms8.io` is free and the easier path for most users.
+
+### What does "vibe coding" mean here?
+
+Vibe coding is shipping working software by describing what you want in plain English to an AI assistant, instead of writing every line by hand. SMS8 MCP makes one of the most common requests — *"add SMS notifications"* — possible without ever touching Twilio's dashboard, A2P 10DLC paperwork, or carrier portal.
 
 ---
 
-## 🤖 What "AI-friendly" means here
+## Security & secrets
 
-This MCP is built so an AI agent can integrate SMS into any project **without external documentation lookups**:
+This repository contains **zero secrets** — all credentials live in environment variables or your AI tool's MCP config:
 
-1. **`setup_sms8` returns a complete context block** — endpoints, env-var hints, device list, code samples, dashboard URLs. One call gives the AI everything it needs.
-2. **Errors are self-documenting** — they tell the AI exactly what's wrong and which URL fixes it (`"Pair an Android device at https://app.sms8.io/devices.php"`).
-3. **Tool descriptions explain the *why***, not just the *what* — so an AI picks the right tool for the right job.
-4. **Defaults are sane** — 6-digit OTP, 5-minute expiry, 5 attempts, primary device. The AI doesn't have to guess.
+```bash
+SMS8_API_KEY=sk_…        # from app.sms8.io → Profile → API
+SMS8_WEBHOOK_SECRET=…    # from app.sms8.io → Webhook
+```
 
----
+The server enforces:
 
-## 📚 Docs & links
+- Per-user API-key auth on every `tools/call`
+- POST-only on OTP endpoints; rejects GET to prevent CSRF via tag injection
+- Constant-time `hash_equals` compare for OTP verification
+- Transaction-wrapped rate-limit checks (no race past the 5-OTP-per-phone-per-24h cap)
+- SSRF guards on webhook URLs — blocks loopback, RFC1918, CGNAT, link-local, IPv4-mapped IPv6, plus DNS resolution of the host at validation time
+- HMAC-SHA256 webhook signatures (`X-SMS8-Signature`)
+- `setup_sms8` response masks the API key (last 4 chars only) to prevent leakage into AI chat history
 
-- **MCP docs & playground:** [mcp.sms8.io](https://mcp.sms8.io)
-- **SMS8 main site:** [sms8.io](https://sms8.io)
-- **API reference:** [app.sms8.io/api.php](https://app.sms8.io/api.php)
-- **Android SMS Gateway guide:** [sms8.io/android-sms-gateway](https://sms8.io/android-sms-gateway)
-- **OTP / verification guide:** [sms8.io/sms8-api-documentation](https://sms8.io/sms8-api-documentation)
-- **Integrations** (WooCommerce, Shopify, Zapier, n8n, GoHighLevel): [sms8.io/integrations](https://sms8.io/integrations)
-
----
-
-## 🆚 SMS8 vs Twilio / MessageBird (for AI-coded apps)
-
-|  | SMS8 + MCP | Twilio | MessageBird |
-|---|---|---|---|
-| AI / MCP integration | ✅ Native | ❌ None | ❌ None |
-| Per-message fee | $0 (uses your SIM) | $0.0079+ | $0.045+ |
-| A2P 10DLC registration | ❌ Not needed | ✅ Required (weeks) | Region-dependent |
-| Setup time | 60 seconds | Days |  Hours |
-| Two-way SMS | ✅ | ✅ | ✅ |
-| OTP / 2FA | ✅ Built-in | Add-on ($) | Add-on ($) |
+For a full security audit summary, see [`SECURITY.md`](SECURITY.md) (if present) or open an issue.
 
 ---
 
-## 🏷 Topics
+## Repository layout
 
-`mcp` · `mcp-server` · `model-context-protocol` · `claude-code` · `cursor` · `windsurf` · `sms-api` · `sms-gateway` · `otp` · `otp-verification` · `2fa` · `android-sms-gateway` · `twilio-alternative` · `messagebird-alternative` · `ai-tools` · `vibe-coding` · `developer-experience` · `webhooks`
+```
+.
+├── README.md                       ← this file
+├── LICENSE                         ← MIT
+├── index.php                       ← MCP server entry (JSON-RPC dispatcher)
+├── landing.html                    ← marketing landing at mcp.sms8.io
+├── .claude-plugin/plugin.json      ← Claude Code plugin manifest
+├── .mcp.json                       ← MCP server config (referenced by plugin)
+├── skills/send-sms/SKILL.md        ← Skill that teaches Claude when to use SMS8
+├── npm/                            ← @sms8/mcp npm package (stdio bridge)
+│   ├── package.json
+│   ├── bin/sms8-mcp.js
+│   └── README.md
+├── lib/                            ← Auth, JsonRpc, ToolRegistry
+├── tools/                          ← 7 tool implementations (setup, send_sms, …)
+└── examples/                       ← Drop-in PHP + JS code samples
+```
 
 ---
 
-## 📄 License
+## Roadmap
+
+- [x] HTTP MCP server (live at `mcp.sms8.io`)
+- [x] Hosted OTP endpoints with per-phone abuse cap
+- [x] npm package `@sms8/mcp` for stdio clients
+- [x] Claude Code plugin + Skill
+- [ ] MMS support
+- [ ] Inbound SMS auto-routing to AI for replies
+- [ ] Per-tool granular rate limits in the dashboard
+- [ ] Multi-language code examples (Python, Go, Ruby)
+
+---
+
+## Contributing
+
+Issues and pull requests welcome at [github.com/1fancy/sms8-sms-gateway](https://github.com/1fancy/sms8-sms-gateway). Open a discussion before large changes.
+
+## License
 
 MIT — see [LICENSE](LICENSE).
 
-## 🤝 Contributing
-
-Issues + PRs welcome. For commercial support, write to **hello@sms8.io**.
-
 ---
 
-<sub>**SMS8.io** — Convert your Android phone to an SMS gateway. Send unlimited SMS, OTP, and notifications without per-message fees or A2P 10DLC registration. Built for AI-era developers who want to ship fast.</sub>
+## Keywords
+
+*model context protocol, mcp server, mcp sms, claude code sms, claude code mcp, cursor mcp, windsurf mcp, sms api, otp api, sms gateway, android sms gateway, twilio alternative, vibe coding, ai sms integration, sms notifications, send sms from claude, send sms from cursor, phone verification api, sms otp, 2fa sms, webhook sms, inbound sms, two-way sms, unlimited sms, no per-message fees, no A2P 10DLC, ai coding tools, sms8*
