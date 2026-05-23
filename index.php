@@ -63,10 +63,38 @@ if ($isOptions) {
     exit;
 }
 
-// Friendly landing page on GET — humans hitting mcp.sms8.io in a browser
+// Friendly browser pages on GET — humans hitting mcp.sms8.io.
+// Maps the URL path to a PHP page in pages/. Anything unmapped falls back
+// to the landing page so legacy bookmarks keep working.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $path = strtolower(trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/'));
+    $routes = [
+        ''    => 'pages/home.php',
+        'api' => 'pages/api.php',
+        'otp' => 'pages/otp.php',
+    ];
+    if (isset($routes[$path])) {
+        header('Content-Type: text/html; charset=utf-8');
+        require __DIR__ . '/' . $routes[$path];
+        exit;
+    }
+    // Static assets routed through index due to .htaccess catch-all
+    if (preg_match('#\.(css|js|png|svg|ico|jpg|jpeg|webp|woff2?|ttf|map)$#i', $path)) {
+        $file = __DIR__ . '/' . $path;
+        if (is_file($file)) {
+            // Let the web server detect content-type
+            readfile($file);
+            exit;
+        }
+    }
+    // Fallback for /robots.txt, /sitemap.xml, etc
+    if (is_file(__DIR__ . '/' . $path)) {
+        readfile(__DIR__ . '/' . $path);
+        exit;
+    }
+    // Unknown path — show home
     header('Content-Type: text/html; charset=utf-8');
-    readfile(__DIR__ . '/landing.html');
+    require __DIR__ . '/pages/home.php';
     exit;
 }
 

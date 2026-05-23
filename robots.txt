@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mcp.sms8.io/sitemap.xml
