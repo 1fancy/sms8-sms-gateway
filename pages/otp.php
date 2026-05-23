@@ -1,11 +1,11 @@
 <?php
 $page      = 'otp';
-$title     = 'OTP and Phone Verification API | SMS8 MCP Documentation';
-$desc      = 'Send and verify one-time passwords (OTPs) from Claude Code, Cursor, Windsurf or any HTTP client. Uses your Android phone as the gateway. Configurable code length, expiry, and attempts. Hard per-phone abuse cap. No A2P 10DLC, no per-message fees.';
-$canonical = 'https://mcp.sms8.io/otp';
+$title     = 'SMS OTP Verification API | SMS8 MCP Phone Verification for Claude Code, Cursor';
+$desc      = 'SMS OTP verification API for the SMS8 MCP server. Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client through your Android phone as the SMS gateway. Configurable code length, expiry, and attempts. Hard per-phone abuse cap. No A2P 10DLC, no per-message fees.';
+$canonical = 'https://mcp.sms8.io/sms-otp-verification-api';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS8 OTP API Documentation","description":"Reference for send_otp and verify_otp on the SMS8 MCP server: code length, expiry, rate limits, security model, curl examples.","url":"https://mcp.sms8.io/otp","publisher":{"@type":"Organization","name":"SMS8.io"}}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS OTP Verification API | SMS8 MCP","description":"Reference for send_otp and verify_otp on the SMS8 MCP server: code length, expiry, rate limits, security model, curl examples.","url":"https://mcp.sms8.io/sms-otp-verification-api","publisher":{"@type":"Organization","name":"SMS8.io"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -27,7 +27,7 @@ require __DIR__ . '/_header.php';
       <p class="lede">Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client. Configurable code length, expiry, and attempts. Hard per-phone abuse cap.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/otp">Try the live test</a>
-        <a class="btn-ghost btn-lg" href="/api">API reference</a>
+        <a class="btn-ghost btn-lg" href="/sms-api-documentation">API reference</a>
       </div>
     </div>
   </div>

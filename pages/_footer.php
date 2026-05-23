@@ -8,8 +8,8 @@
       <span>
         <a href="https://sms8.io">sms8.io</a> &middot;
         <a href="https://app.sms8.io">dashboard</a> &middot;
-        <a href="/api">API docs</a> &middot;
-        <a href="/otp">OTP docs</a> &middot;
+        <a href="/sms-api-documentation">API docs</a> &middot;
+        <a href="/sms-otp-verification-api">OTP docs</a> &middot;
         <a href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">github</a>
       </span>
     </div>

@@ -51,8 +51,7 @@ img, svg { display: block; max-width: 100%; }
 }
 .site-logo img {
   height: 26px; width: auto;
-  /* Logo is the dark version from sms8.io; invert to white for dark theme */
-  filter: brightness(0) invert(1);
+  /* Logo is already the white variant from sms8.io WordPress */
 }
 .brand-suffix {
   font-size: 11px; font-weight: 700;

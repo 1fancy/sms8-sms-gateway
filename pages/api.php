@@ -1,11 +1,11 @@
 <?php
 $page      = 'api';
-$title     = 'API Documentation | SMS8 MCP Server';
-$desc      = 'Complete reference for the SMS8 MCP server. JSON-RPC 2.0 over HTTPS, Bearer authentication, 7 tools (setup_sms8, send_sms, send_otp, verify_otp, get_messages, list_devices, create_webhook), rate limits, security model, and curl examples.';
-$canonical = 'https://mcp.sms8.io/api';
+$title     = 'SMS API Documentation | SMS8 MCP Server for Claude Code, Cursor, Windsurf';
+$desc      = 'Complete SMS API documentation for the SMS8 MCP server. JSON-RPC 2.0 over HTTPS, Bearer authentication, 7 tools (send_sms, send_otp, verify_otp, get_messages, list_devices, create_webhook, setup_sms8), rate limits, security model, and curl examples. Android SMS gateway — no Twilio, no A2P 10DLC.';
+$canonical = 'https://mcp.sms8.io/sms-api-documentation';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS8 MCP API Documentation","description":"Reference for the SMS8 Model Context Protocol server: JSON-RPC interface, tools, authentication, and rate limits.","url":"https://mcp.sms8.io/api","publisher":{"@type":"Organization","name":"SMS8.io"}}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS API Documentation | SMS8 MCP Server","description":"Reference for the SMS8 Model Context Protocol server: JSON-RPC interface, tools, authentication, and rate limits.","url":"https://mcp.sms8.io/sms-api-documentation","publisher":{"@type":"Organization","name":"SMS8.io"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -224,7 +224,7 @@ curl https://mcp.sms8.io \
       <p>Sign up free, pair your Android, paste the MCP config into your AI tool, and ship.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/">Create free account</a>
-        <a class="btn-ghost btn-lg" href="/otp">Read OTP docs</a>
+        <a class="btn-ghost btn-lg" href="/sms-otp-verification-api">Read OTP docs</a>
       </div>
     </div>
   </div>

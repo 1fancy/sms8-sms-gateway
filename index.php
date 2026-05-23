@@ -68,10 +68,23 @@ if ($isOptions) {
 // to the landing page so legacy bookmarks keep working.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $path = strtolower(trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/'));
+
+    // 301-redirect old short slugs to the SEO-optimized ones (preserve any
+    // links shared before the rename, and keep search engines pointed to one
+    // canonical URL).
+    $redirects = [
+        'api' => '/sms-api-documentation',
+        'otp' => '/sms-otp-verification-api',
+    ];
+    if (isset($redirects[$path])) {
+        header('Location: ' . $redirects[$path], true, 301);
+        exit;
+    }
+
     $routes = [
-        ''    => 'pages/home.php',
-        'api' => 'pages/api.php',
-        'otp' => 'pages/otp.php',
+        ''                          => 'pages/home.php',
+        'sms-api-documentation'     => 'pages/api.php',
+        'sms-otp-verification-api'  => 'pages/otp.php',
     ];
     if (isset($routes[$path])) {
         header('Content-Type: text/html; charset=utf-8');

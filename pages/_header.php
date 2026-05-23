@@ -36,10 +36,10 @@ $jsonld    = $jsonld    ?? '';
 <meta name="twitter:title"       content="<?= htmlspecialchars($title) ?>">
 <meta name="twitter:description" content="<?= htmlspecialchars($desc) ?>">
 
-<!-- Favicon from sms8.io marketing site so the brand visually merges -->
-<link rel="icon"           type="image/png" sizes="32x32"  href="https://sms8.io/assets/images/favicon-32.png">
-<link rel="icon"           type="image/png" sizes="192x192" href="https://sms8.io/assets/images/favicon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="https://sms8.io/assets/images/favicon-180.png">
+<!-- Favicons from sms8.io WordPress so the brand visually merges -->
+<link rel="icon"           type="image/png" sizes="32x32"   href="https://sms8.io/wp-content/uploads/2024/04/cropped-favicon-sms8-32x32.x51548.png">
+<link rel="icon"           type="image/png" sizes="192x192" href="https://sms8.io/wp-content/uploads/2024/04/cropped-favicon-sms8-192x192.x51548.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://sms8.io/wp-content/uploads/2024/04/cropped-favicon-sms8-180x180.x51548.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,14 +54,14 @@ $jsonld    = $jsonld    ?? '';
 <header class="site-header" id="site-header">
   <div class="header-inner">
     <a href="/" class="site-logo" aria-label="SMS8 MCP — Home">
-      <img src="https://sms8.io/assets/images/sms8-logo-white.png" alt="SMS8 — Android SMS Gateway" width="120" height="29" loading="eager" decoding="async">
+      <img src="https://sms8.io/wp-content/uploads/2023/09/sms8.io-logo-white-1024x245.x51548.png" alt="SMS8 — Android SMS Gateway" width="120" height="29" loading="eager" decoding="async">
       <span class="brand-suffix">MCP</span>
     </a>
     <nav class="site-nav" aria-label="Main navigation">
-      <a href="/"    class="<?= $page === 'home' ? 'active' : '' ?>">Tools</a>
-      <a href="/#install" class="<?= $page === 'home' ? '' : '' ?>">Install</a>
-      <a href="/api" class="<?= $page === 'api'  ? 'active' : '' ?>">API</a>
-      <a href="/otp" class="<?= $page === 'otp'  ? 'active' : '' ?>">OTP</a>
+      <a href="/" class="<?= $page === 'home' ? 'active' : '' ?>">Tools</a>
+      <a href="/#install">Install</a>
+      <a href="/sms-api-documentation" class="<?= $page === 'api'  ? 'active' : '' ?>">API</a>
+      <a href="/sms-otp-verification-api" class="<?= $page === 'otp'  ? 'active' : '' ?>">OTP</a>
       <a href="/#faq">FAQ</a>
       <a href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">GitHub</a>
     </nav>
@@ -78,8 +78,8 @@ $jsonld    = $jsonld    ?? '';
 <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
   <a href="/">Tools</a>
   <a href="/#install">Install</a>
-  <a href="/api">API</a>
-  <a href="/otp">OTP</a>
+  <a href="/sms-api-documentation">API</a>
+  <a href="/sms-otp-verification-api">OTP</a>
   <a href="/#faq">FAQ</a>
   <a href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">GitHub</a>
   <div class="mobile-nav-actions">

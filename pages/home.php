@@ -59,7 +59,7 @@ require __DIR__ . '/_header.php';
       <div class="step-card reveal" style="background: linear-gradient(180deg, rgba(168,85,247,0.10), rgba(168,85,247,0.04)); border-color: rgba(168,85,247,0.4);">
         <h3 style="color: #c4b5fd;">Read the docs</h3>
         <p>Full API + OTP reference with curl examples, rate limits, and security model.</p>
-        <p style="margin-top: 8px;"><a href="/api" style="color: #c4b5fd; font-weight: 600;">API docs →</a> &nbsp; <a href="/otp" style="color: #c4b5fd; font-weight: 600;">OTP docs →</a></p>
+        <p style="margin-top: 8px;"><a href="/sms-api-documentation" style="color: #c4b5fd; font-weight: 600;">API docs →</a> &nbsp; <a href="/sms-otp-verification-api" style="color: #c4b5fd; font-weight: 600;">OTP docs →</a></p>
       </div>
     </div>
   </div>
@@ -81,7 +81,7 @@ require __DIR__ . '/_header.php';
         </ul>
         <div class="hero-cta" style="margin-top: 26px; justify-content: flex-start;">
           <a class="btn-cta" href="https://app.sms8.io/mcp-setup.php">Open setup wizard</a>
-          <a class="btn-ghost" href="/api">Read API docs</a>
+          <a class="btn-ghost" href="/sms-api-documentation">Read API docs</a>
         </div>
       </div>
       <div class="visual-card reveal">
@@ -186,7 +186,7 @@ require __DIR__ . '/_header.php';
       <p>Open the setup wizard, copy the prefilled MCP config into your AI tool, and ship.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/mcp-setup.php">Get started free</a>
-        <a class="btn-ghost btn-lg" href="/api">Browse API docs</a>
+        <a class="btn-ghost btn-lg" href="/sms-api-documentation">Browse API docs</a>
       </div>
     </div>
   </div>
