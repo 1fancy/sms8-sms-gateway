@@ -18,6 +18,10 @@ Thumbs.db
 *.log
 /logs/
 
+# Server-managed (BT-Panel / Let's Encrypt)
+.user.ini
+.well-known/
+
 # Dependencies (we don't ship a vendor — the server reuses app.sms8.io/vendor)
 vendor/
 node_modules/
