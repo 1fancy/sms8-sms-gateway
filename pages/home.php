@@ -1,6 +1,6 @@
 <?php
 $page      = 'home';
-$title     = 'SMS Gateway MCP for Claude Code, Cursor &amp; Windsurf | SMS8';
+$title     = 'SMS Gateway MCP for Claude Code, Cursor & Windsurf | SMS8';
 $desc      = 'SMS gateway MCP server for AI coding tools. Send SMS, issue and verify OTPs, register webhooks from Claude Code, Cursor and Windsurf using your paired Android phone. No Twilio, no A2P 10DLC, no per-message fees.';
 $canonical = 'https://mcp.sms8.io/';
 $jsonld = <<<'HTML'

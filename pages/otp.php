@@ -1,6 +1,6 @@
 <?php
 $page      = 'otp';
-$title     = 'Android SMS OTP &amp; Phone Verification API for Claude Code, Cursor';
+$title     = 'Android SMS OTP & Phone Verification API for Claude Code, Cursor';
 $desc      = 'Android SMS OTP verification API. Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client. Configurable code length, expiry and attempts, constant-time compare, hard 5-per-phone-per-day abuse cap. No Twilio, no A2P 10DLC, no per-message fees.';
 $canonical = 'https://mcp.sms8.io/sms-otp-verification-api';
 $jsonld = <<<'HTML'
