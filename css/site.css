@@ -463,3 +463,212 @@ footer {
 }
 footer a { color: #b8b8c8; }
 footer a:hover { color: #fff; }
+
+/* ============================================================
+ * MOBILE OPTIMIZATIONS
+ * Tightens spacing, scales hero, single-column grids, larger
+ * tap targets, full-width mobile nav with overlay.
+ * Three breakpoints: 880, 640, 420.
+ * ============================================================ */
+
+@media (max-width: 880px) {
+  html { scroll-padding-top: 64px; }
+  .container { padding: 0 20px; }
+
+  /* Header */
+  .header-inner { padding: 12px 20px; gap: 12px; }
+  .site-logo { gap: 8px; font-size: 14px; }
+  .site-logo img { height: 22px; }
+  .brand-suffix { font-size: 10px; padding: 2px 6px; }
+  .menu-toggle { margin-left: auto; }
+
+  /* Mobile drawer - full width, smooth slide */
+  .mobile-nav {
+    position: fixed;
+    top: 56px; left: 0; right: 0; bottom: 0;
+    background: rgba(6,6,13,0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 24px;
+    overflow-y: auto;
+    border-bottom: 0;
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    display: block;
+  }
+  .mobile-nav.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mobile-nav a {
+    padding: 16px 4px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #e8e8f0;
+  }
+  .mobile-nav-actions {
+    margin-top: 22px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mobile-nav-actions .btn-cta,
+  .mobile-nav-actions .btn-ghost {
+    width: 100%; justify-content: center;
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+
+  /* Hero */
+  main { padding-top: 56px; }
+  .page-hero { padding: 48px 0 40px; }
+  .page-hero-sm { padding: 36px 0 24px; }
+  .page-hero h1 {
+    font-size: clamp(1.85rem, 8vw, 2.6rem);
+    line-height: 1.1;
+    margin-bottom: 18px;
+  }
+  .hero-badge {
+    font-size: 11px;
+    padding: 6px 12px;
+    margin-bottom: 20px;
+  }
+  .page-hero p.lede,
+  .page-hero p {
+    font-size: 1rem;
+    line-height: 1.55;
+    margin-bottom: 26px;
+  }
+  .hero-cta {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .hero-cta .btn-cta,
+  .hero-cta .btn-ghost {
+    flex: 1 1 auto;
+    min-width: 140px;
+    justify-content: center;
+    padding: 13px 18px;
+    font-size: 14.5px;
+  }
+  .btn-lg { padding: 13px 20px; font-size: 14.5px; }
+  .hero-trust {
+    gap: 14px 18px;
+    font-size: 12.5px;
+    justify-content: center;
+  }
+
+  /* Sections */
+  .section { padding: 48px 0; }
+  .section-head { margin-bottom: 32px; }
+  .section h2 {
+    font-size: clamp(1.45rem, 5.5vw, 1.9rem);
+    line-height: 1.22;
+  }
+  .section h2::after { width: 48px; margin-top: 12px; }
+  .section-lead { font-size: 0.95rem; }
+  .section-eyebrow { font-size: 11px; }
+
+  /* Grids - single column on phones, larger gap */
+  .steps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .step-card { padding: 20px; }
+  .step-card h3 { font-size: 1rem; }
+  .step-card p { font-size: 13.5px; }
+
+  /* Split row already collapses; ensure mobile order is text-first */
+  .split-row { gap: 24px; }
+  .visual-card { padding: 18px; }
+  .visual-card pre { font-size: 12px; }
+
+  /* Compare table - shrink density */
+  table.compare { font-size: 12.5px; }
+  table.compare th,
+  table.compare td { padding: 10px 12px; }
+
+  /* FAQ */
+  .faq details { padding: 14px 16px; }
+  .faq summary { font-size: 14.5px; }
+  .faq details p { font-size: 14px; }
+
+  /* CTA banner */
+  .cta-banner { margin: 24px 0; }
+  .cta-banner-inner { padding: 32px 22px; border-radius: 14px; }
+  .cta-banner-inner h2 { font-size: 1.4rem; }
+  .cta-banner-inner p { font-size: 14.5px; }
+
+  /* Footer */
+  footer { padding: 28px 0; margin-top: 40px; font-size: 12.5px; }
+  .footer-row { gap: 12px; }
+
+  /* Code blocks - prevent horizontal page scroll on overflow */
+  .code-block, pre.code-block, .visual-card pre {
+    font-size: 12px;
+    padding: 14px;
+    line-height: 1.55;
+  }
+}
+
+/* ── Phones (≤ 640px) ── */
+@media (max-width: 640px) {
+  .container { padding: 0 16px; }
+  .header-inner { padding: 10px 16px; }
+  .mobile-nav { padding: 20px 16px; }
+
+  /* Single-column hero CTAs */
+  .hero-cta { flex-direction: column; }
+  .hero-cta .btn-cta,
+  .hero-cta .btn-ghost { width: 100%; min-width: 0; }
+
+  /* Hero text */
+  .page-hero { padding: 36px 0 32px; }
+  .page-hero-sm { padding: 28px 0 20px; }
+  .page-hero h1 { font-size: clamp(1.65rem, 8.5vw, 2.2rem); }
+  .hero-badge { margin-bottom: 16px; }
+  .hero-trust { gap: 10px 16px; font-size: 12px; }
+  .hero-trust span { white-space: nowrap; }
+
+  /* Section spacing */
+  .section { padding: 40px 0; }
+  .section-head { margin-bottom: 24px; }
+
+  /* CTA banner narrower padding */
+  .cta-banner-inner { padding: 26px 18px; }
+  .cta-banner-inner h2 { font-size: 1.25rem; }
+}
+
+/* ── Compact phones (≤ 420px) ── */
+@media (max-width: 420px) {
+  .site-logo img { height: 20px; }
+  .brand-suffix { display: none; }
+  .page-hero h1 { font-size: 1.6rem; line-height: 1.15; }
+  .hero-trust { gap: 8px 12px; }
+  .step-card { padding: 16px; }
+  .visual-card { padding: 14px; }
+  .cta-banner-inner { padding: 22px 14px; }
+}
+
+/* ============================================================
+ * DOCS PAGE (api.php) - mobile playground & sidebar tweaks
+ * The docs-shell media queries already live inline in api.php;
+ * these only patch sub-components when shown on small screens.
+ * ============================================================ */
+@media (max-width: 880px) {
+  /* Playground form text inputs need to NOT trigger iOS zoom (font >= 16px) */
+  .pg-field input,
+  .pg-field select,
+  .pg-field textarea,
+  .mkt-pg-form input,
+  .mkt-pg-form textarea {
+    font-size: 16px;
+  }
+  .pg-tab, .mkt-pg-tab {
+    padding: 9px 11px;
+    font-size: 12.5px;
+  }
+  .pg-actions .btn-cta { padding: 12px 18px; }
+}

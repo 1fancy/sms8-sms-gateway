@@ -48,15 +48,23 @@
   window.addEventListener('scroll', update, { passive: true });
 })();
 
-// Mobile nav toggle
+// Mobile nav toggle (+ close on link tap, esc, and outside click)
 (function () {
   var btn = document.getElementById('menu-toggle');
   var nav = document.getElementById('mobile-nav');
   if (!btn || !nav) return;
-  btn.addEventListener('click', function () {
-    var open = nav.classList.toggle('open');
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  function setOpen(open) {
+    nav.classList.toggle('open', open);
     btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  btn.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
+  nav.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') setOpen(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.classList.contains('open')) setOpen(false);
   });
 })();
 </script>
