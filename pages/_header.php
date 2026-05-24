@@ -10,7 +10,7 @@
  */
 $page      = $page      ?? 'home';
 $title     = $title     ?? 'SMS8 MCP Server';
-$desc      = $desc      ?? 'Official Model Context Protocol server for SMS8. SMS, OTP and webhooks for Claude Code, Cursor, Windsurf.';
+$desc      = $desc      ?? 'SMS gateway MCP for Claude Code, Cursor and Windsurf — SMS, OTP and webhooks from your paired Android phone.';
 $canonical = $canonical ?? 'https://mcp.sms8.io/' . ($page === 'home' ? '' : $page);
 $jsonld    = $jsonld    ?? '';
 ?>

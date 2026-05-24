@@ -1,233 +1,575 @@
 <?php
 $page      = 'api';
-$title     = 'SMS API Documentation | SMS8 MCP Server for Claude Code, Cursor, Windsurf';
-$desc      = 'Complete SMS API documentation for the SMS8 MCP server. JSON-RPC 2.0 over HTTPS, Bearer authentication, 7 tools (send_sms, send_otp, verify_otp, get_messages, list_devices, create_webhook, setup_sms8), rate limits, security model, and curl examples. Android SMS gateway — no Twilio, no A2P 10DLC.';
+$title     = 'SMS Gateway API for Vibe Coding — Claude Code, Cursor, Windsurf | SMS8';
+$desc      = 'SMS gateway API built for AI-assisted coding. Send SMS and MMS, verify phone numbers, run USSD and read your inbox from Claude Code, Cursor, Windsurf or plain curl. Android-powered, no Twilio, no A2P 10DLC.';
 $canonical = 'https://mcp.sms8.io/sms-api-documentation';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS API Documentation | SMS8 MCP Server","description":"Reference for the SMS8 Model Context Protocol server: JSON-RPC interface, tools, authentication, and rate limits.","url":"https://mcp.sms8.io/sms-api-documentation","publisher":{"@type":"Organization","name":"SMS8.io"}}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"SMS Gateway API for Vibe Coding","description":"Reference for the SMS8 SMS gateway API: endpoints, authentication, request and response shapes, device routing, and MCP integration for Claude Code, Cursor and Windsurf.","url":"https://mcp.sms8.io/sms-api-documentation","keywords":"sms gateway api, android sms gateway, sms api for claude code, sms api mcp, sms api cursor, sms api windsurf, vibe coding sms, sms otp api","publisher":{"@type":"Organization","name":"SMS8","url":"https://sms8.io"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"What protocol does the SMS8 MCP server use?","acceptedAnswer":{"@type":"Answer","text":"JSON-RPC 2.0 over HTTPS at mcp.sms8.io. The server implements MCP revision 2024-11-05 with initialize, tools/list, tools/call and ping methods."}},
-{"@type":"Question","name":"How do I authenticate against the SMS8 MCP API?","acceptedAnswer":{"@type":"Answer","text":"Send your SMS8 API key in the Authorization: Bearer header on every tools/call request. The X-Api-Key header is also accepted. The setup_sms8 tool is public; all other tools require authentication."}},
-{"@type":"Question","name":"What are the SMS8 MCP rate limits?","acceptedAnswer":{"@type":"Answer","text":"Per-key SMS sending inherits from the SMS8 plan. The OTP endpoints enforce a hard cap of 5 OTPs per phone per 24-hour window, a configurable resend cooldown (30 to 600 seconds, default 60), and a per-OTP attempt cap (default 5)."}},
-{"@type":"Question","name":"Is A2P 10DLC required to use the SMS8 MCP?","acceptedAnswer":{"@type":"Answer","text":"No. SMS8 routes messages through your paired Android phone and SIM card, so A2P 10DLC registration is not required."}}
+{"@type":"Question","name":"What is the SMS8 SMS gateway API?","acceptedAnswer":{"@type":"Answer","text":"An HTTP API that sends SMS and MMS, manages contacts, runs USSD, and reads your inbox. Every endpoint is a POST under https://app.sms8.io/services/ authenticated with a key parameter. Messages route through a paired Android phone so there is no A2P 10DLC and no per-message fee."}},
+{"@type":"Question","name":"How do I use the SMS gateway from Claude Code, Cursor or Windsurf?","acceptedAnswer":{"@type":"Answer","text":"Add the MCP server at mcp.sms8.io to your AI tool with your SMS8 API key as a Bearer token. Claude Code, Cursor and Windsurf all support HTTP MCP servers. The MCP wraps the same REST endpoints in JSON-RPC tools like send_sms, send_otp and verify_otp."}},
+{"@type":"Question","name":"How do I authenticate against the SMS gateway API?","acceptedAnswer":{"@type":"Answer","text":"Pass your SMS8 API key in the key field of the POST body. The same key is shown on app.sms8.io/api.php and authorises every endpoint."}},
+{"@type":"Question","name":"What is the response format?","acceptedAnswer":{"@type":"Answer","text":"JSON. Every response has a top-level success boolean. On success the payload lives in data; on error a structured error object is returned with code and message."}},
+{"@type":"Question","name":"Can I send SMS without a Twilio number?","acceptedAnswer":{"@type":"Answer","text":"Yes. SMS8 uses your own Android phone and SIM card as the gateway. No Twilio number, no A2P 10DLC registration, no per-message carrier fees."}}
 ]}
 </script>
 HTML;
 require __DIR__ . '/_header.php';
 ?>
 
-<section class="page-hero page-hero-sm">
-  <div class="container">
-    <div class="page-hero-inner reveal">
-      <span class="hero-badge"><span class="badge-dot"></span>API reference</span>
-      <h1>SMS8 MCP <span class="gradient-text">API documentation</span></h1>
-      <p class="lede">JSON-RPC 2.0 over HTTPS. Seven tools. Bearer authentication. Works with Claude Code, Cursor, Windsurf, Codex and any MCP-compatible AI tool.</p>
-      <div class="hero-cta">
-        <a class="btn-cta btn-lg" href="https://app.sms8.io/mcp-setup.php">Get your API key</a>
-        <a class="btn-ghost btn-lg" href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">View on GitHub</a>
-      </div>
-    </div>
-  </div>
-</section>
+<style>
+/* Docs layout (scoped to this page) — left nav, scrollable content */
+.docs-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 120px 24px 64px;
+}
+.docs-side {
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.docs-side h4 {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+  color: #c4b5fd; text-transform: uppercase;
+  margin: 18px 0 8px;
+}
+.docs-side h4:first-child { margin-top: 0; }
+.docs-side a {
+  display: block;
+  padding: 6px 10px;
+  font-size: 13.5px;
+  color: #a8a8bd;
+  border-radius: 6px;
+  line-height: 1.45;
+  border-left: 2px solid transparent;
+  margin-left: -2px;
+}
+.docs-side a:hover { color: #fff; background: rgba(255,255,255,0.03); }
+.docs-side a.is-active {
+  color: #ddd6fe;
+  background: rgba(168,85,247,0.08);
+  border-left-color: #a855f7;
+}
+.docs-main { min-width: 0; max-width: 820px; }
+.docs-main h1 {
+  font-size: clamp(36px, 4.5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.docs-main .lede {
+  font-size: 18px; color: #b8b8c8;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+.docs-main .meta-pills {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 36px;
+}
+.docs-main .meta-pills span {
+  font-size: 12px; font-weight: 500;
+  color: #c4b5fd;
+  background: rgba(168,85,247,0.10);
+  border: 1px solid rgba(168,85,247,0.25);
+  padding: 5px 10px; border-radius: 999px;
+}
+.docs-main h2 {
+  font-size: 26px; font-weight: 700;
+  margin: 56px 0 14px;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 96px;
+}
+.docs-main h2:first-of-type { margin-top: 0; }
+.docs-main h3 {
+  font-size: 17px; font-weight: 600;
+  margin: 32px 0 10px;
+  color: #ddd6fe;
+  scroll-margin-top: 96px;
+}
+.docs-main p { margin-bottom: 14px; color: #c8c8d8; line-height: 1.72; }
+.docs-main ul, .docs-main ol { margin: 0 0 16px 22px; color: #c8c8d8; }
+.docs-main li { margin-bottom: 6px; line-height: 1.65; }
+.docs-main code {
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.88em;
+  background: rgba(168,85,247,0.10);
+  color: #ddd6fe;
+  padding: 2px 6px; border-radius: 4px;
+  border: 1px solid rgba(168,85,247,0.15);
+}
+.docs-main pre {
+  background: #0a0a14;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px; line-height: 1.65;
+  color: #d8d8e8;
+  margin: 16px 0 22px;
+}
+.docs-main pre code {
+  background: transparent; border: 0; padding: 0; color: inherit; font-size: inherit;
+}
+.docs-main pre .k { color: #a5b4fc; }
+.docs-main pre .s { color: #86efac; }
+.docs-main pre .c { color: #6b7280; font-style: italic; }
+.docs-main pre .n { color: #fcd34d; }
+.docs-main table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 26px;
+  font-size: 14px;
+}
+.docs-main thead th {
+  text-align: left;
+  font-size: 11px; font-weight: 700;
+  color: #c4b5fd; text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.docs-main tbody td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top;
+  color: #c8c8d8;
+}
+.docs-main tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.docs-main tbody td:first-child { color: #ddd6fe; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap; }
+.docs-main tbody td:nth-child(2) { color: #a8a8bd; font-size: 12.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
-<section class="section" id="endpoint">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">Base endpoint</span>
-      <h2>One HTTPS endpoint, JSON-RPC 2.0</h2>
-      <p class="section-lead">All calls go to <code style="background:rgba(168,85,247,0.15);color:#c4b5fd;padding:2px 8px;border-radius:4px;">https://mcp.sms8.io</code>. GET serves the landing. POST runs the protocol.</p>
-    </div>
-    <div class="split-row reveal">
-      <div class="split-text">
-        <ul class="check-list">
-          <li><strong>Protocol</strong>: Model Context Protocol revision 2024-11-05</li>
-          <li><strong>Methods</strong>: <code>initialize</code>, <code>tools/list</code>, <code>tools/call</code>, <code>ping</code></li>
-          <li><strong>Transport</strong>: HTTP (or stdio via <code>@sms8/mcp</code>)</li>
-          <li><strong>Content type</strong>: <code>application/json</code></li>
-          <li><strong>Auth</strong>: <code>Authorization: Bearer YOUR_KEY</code></li>
-        </ul>
-      </div>
-      <div class="visual-card">
-        <div class="visual-card-header">curl &middot; tools/list</div>
-<pre>curl https://mcp.sms8.io \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -H <span class="s">"Authorization: Bearer sk_…"</span> \
-  -d <span class="s">'{"jsonrpc":"2.0","id":1,
-      "method":"tools/list"}'</span></pre>
-      </div>
-    </div>
-  </div>
-</section>
+.callout {
+  border: 1px solid rgba(168,85,247,0.25);
+  background: rgba(168,85,247,0.06);
+  border-left: 3px solid #a855f7;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin: 20px 0 24px;
+  font-size: 14.5px;
+}
+.callout strong { color: #ddd6fe; }
+.endpoint-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.method-pill {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  background: #86efac; color: #052e16;
+  padding: 4px 8px; border-radius: 4px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.endpoint-row code {
+  background: transparent; border: 0; padding: 0;
+  color: #fff; font-size: 14px; font-weight: 500;
+}
+.endpoint-row .ep-desc {
+  margin-left: auto; color: #888899; font-size: 13px;
+}
 
-<section class="section section-alt" id="tools">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">Tools reference</span>
-      <h2>Seven tools, full schemas</h2>
-      <p class="section-lead">Each description matches what your AI assistant sees in <code style="background:rgba(168,85,247,0.15);color:#c4b5fd;padding:2px 8px;border-radius:4px;">tools/list</code>.</p>
-    </div>
-    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-      <div class="step-card reveal">
-        <h3><code>setup_sms8</code></h3>
-        <p><strong>Public</strong>. Validates the API key, returns account info, devices, and next-steps. Call once per session.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>api_key</code> (optional, header preferred)</p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>send_sms</code></h3>
-        <p>Send one SMS through a paired Android. Per-device and per-SIM routing.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>phone</code>, <code>message</code>, <code>device_id</code>, <code>sim_slot</code>, <code>devices</code>, <code>option</code>, <code>random_device</code></p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>send_otp</code></h3>
-        <p>Generate and dispatch a verification code. Stores hash + expiry server-side.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>phone</code>, <code>length</code> (4-8), <code>template</code>, <code>expires_in</code> (60-900), <code>max_attempts</code> (1-10)</p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>verify_otp</code></h3>
-        <p>Constant-time compare against the latest OTP for that phone. Returns <code>verified</code> + <code>attempts_left</code> on mismatch.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>phone</code>, <code>code</code></p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>get_messages</code></h3>
-        <p>Fetch recent inbox or sent SMS. Bound SQL parameters.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>direction</code> (all|received|sent), <code>limit</code> (1-100), <code>phone</code></p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>list_devices</code></h3>
-        <p>Return every paired Android device with enabled flag, primary flag, and model.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> none</p>
-      </div>
-      <div class="step-card reveal">
-        <h3><code>create_webhook</code></h3>
-        <p>Register a callback URL for inbound SMS + delivery events. SSRF-guarded. HMAC-signed.</p>
-        <p style="margin-top:8px;"><strong>Args:</strong> <code>url</code> (HTTPS), <code>enabled</code> (default true)</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>Error codes</h3>
-        <p><code>-32601</code> method not found · <code>-32602</code> invalid params · <code>-32001</code> missing api_key · <code>-32002</code> invalid api_key · <code>-32603</code> internal · <code>-32700</code> parse error</p>
-      </div>
-    </div>
-  </div>
-</section>
+@media (max-width: 900px) {
+  .docs-shell { grid-template-columns: 1fr; padding-top: 96px; }
+  .docs-side {
+    position: static;
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 16px; margin-bottom: 28px;
+  }
+}
+</style>
 
-<section class="section" id="auth">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">Authentication</span>
-      <h2>Bearer header, three accepted patterns</h2>
-      <p class="section-lead">Authorization header is preferred. Other paths exist for backward compatibility.</p>
-    </div>
-    <div class="steps-grid" style="grid-template-columns: repeat(3, 1fr);">
-      <div class="step-card reveal">
-        <span class="step-num">PREFERRED</span>
-        <h3>Authorization: Bearer</h3>
-        <p>Header-based. Key stays out of URLs, browser history, and server access logs.</p>
-        <pre class="code-block" style="margin-top:8px;">Authorization: Bearer sk_…</pre>
-      </div>
-      <div class="step-card reveal">
-        <span class="step-num">SUPPORTED</span>
-        <h3>X-Api-Key header</h3>
-        <p>Alternative header for tools that cannot set Authorization.</p>
-        <pre class="code-block" style="margin-top:8px;">X-Api-Key: sk_…</pre>
-      </div>
-      <div class="step-card reveal">
-        <span class="step-num">LEGACY</span>
-        <h3>POST body field</h3>
-        <p>OTP endpoints accept <code>api_key=</code> in the form body. POST only — GET returns 405.</p>
-        <pre class="code-block" style="margin-top:8px;">api_key=sk_…</pre>
-      </div>
-    </div>
-  </div>
-</section>
+<div class="docs-shell">
 
-<section class="section section-alt" id="examples">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">curl examples</span>
-      <h2>Working calls you can paste in</h2>
-    </div>
-    <div class="reveal" style="max-width:820px;margin:0 auto;">
-      <h3 style="font-size:16px;color:#c4b5fd;margin-bottom:10px;">Send an SMS</h3>
-      <pre class="code-block">curl https://mcp.sms8.io \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -H <span class="s">"Authorization: Bearer YOUR_SMS8_API_KEY"</span> \
-  -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"tools/call",
-      "params":{"name":"send_sms",
-                "arguments":{"phone":"+1234567890",
-                             "message":"Hello from SMS8"}}}'</span></pre>
+  <aside class="docs-side" aria-label="API documentation sections">
+    <h4>Get started</h4>
+    <a href="#overview" class="docs-link">Overview</a>
+    <a href="#authentication" class="docs-link">Authentication</a>
+    <a href="#first-call" class="docs-link">Your first SMS</a>
+    <a href="#response-shape" class="docs-link">Response shape</a>
+    <a href="#errors" class="docs-link">Errors</a>
 
-      <h3 style="font-size:16px;color:#c4b5fd;margin:26px 0 10px;">Issue and verify an OTP</h3>
-      <pre class="code-block">curl https://mcp.sms8.io \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -H <span class="s">"Authorization: Bearer YOUR_SMS8_API_KEY"</span> \
-  -d <span class="s">'{"jsonrpc":"2.0","id":2,"method":"tools/call",
-      "params":{"name":"send_otp",
-                "arguments":{"phone":"+1234567890"}}}'</span>
+    <h4>Endpoints</h4>
+    <a href="#send" class="docs-link">Send SMS &amp; MMS</a>
+    <a href="#read-messages" class="docs-link">Read messages</a>
+    <a href="#resend" class="docs-link">Resend</a>
+    <a href="#contacts" class="docs-link">Contacts</a>
+    <a href="#devices" class="docs-link">Devices</a>
+    <a href="#ussd" class="docs-link">USSD</a>
+    <a href="#webhooks" class="docs-link">Inbound webhooks</a>
 
-curl https://mcp.sms8.io \
-  -H <span class="s">"Authorization: Bearer YOUR_SMS8_API_KEY"</span> \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -d <span class="s">'{"jsonrpc":"2.0","id":3,"method":"tools/call",
-      "params":{"name":"verify_otp",
-                "arguments":{"phone":"+1234567890","code":"123456"}}}'</span></pre>
+    <h4>Concepts</h4>
+    <a href="#routing" class="docs-link">Device &amp; SIM routing</a>
+    <a href="#scheduling" class="docs-link">Scheduling</a>
+    <a href="#balance" class="docs-link">Credit balance</a>
 
-      <h3 style="font-size:16px;color:#c4b5fd;margin:26px 0 10px;">List devices</h3>
-      <pre class="code-block">curl https://mcp.sms8.io \
-  -H <span class="s">"Authorization: Bearer YOUR_SMS8_API_KEY"</span> \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -d <span class="s">'{"jsonrpc":"2.0","id":4,"method":"tools/call",
-      "params":{"name":"list_devices","arguments":{}}}'</span></pre>
-    </div>
-  </div>
-</section>
+    <h4>AI tools</h4>
+    <a href="#mcp" class="docs-link">Claude Code, Cursor, Windsurf</a>
 
-<section class="section" id="security">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">Security model</span>
-      <h2>What the server enforces</h2>
-    </div>
-    <div class="steps-grid">
-      <div class="step-card reveal"><h3>Bound SQL parameters</h3><p>Every query uses prepared statements. No user-input string interpolation.</p></div>
-      <div class="step-card reveal"><h3>SSRF block list</h3><p>create_webhook blocks RFC1918, CGNAT, link-local, IPv4-mapped IPv6 and resolves the host at validation time.</p></div>
-      <div class="step-card reveal"><h3>Constant-time compare</h3><p>verify_otp uses <code>hash_equals</code> for code matching. No byte-by-byte timing leaks.</p></div>
-      <div class="step-card reveal"><h3>Race-proof rate limits</h3><p>OTP send and verify both wrap check + update in DB transactions with row locks.</p></div>
-      <div class="step-card reveal"><h3>API key redaction</h3><p>setup_sms8 returns only the last 4 chars so the full key never lands in AI chat history.</p></div>
-      <div class="step-card reveal"><h3>CORS off for tools/call</h3><p>Only discovery methods advertise CORS. Malicious web pages cannot drive SMS sends.</p></div>
-    </div>
-  </div>
-</section>
+    <h4>SDKs</h4>
+    <a href="#sdk-php" class="docs-link">PHP</a>
+    <a href="#sdk-csharp" class="docs-link">C#</a>
+    <a href="#sdk-curl" class="docs-link">curl</a>
 
-<section class="section section-alt" id="faq">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">FAQ</span>
-      <h2>API questions</h2>
-    </div>
-    <div class="faq reveal">
-      <details open><summary>What protocol does the SMS8 MCP server use?</summary><p>JSON-RPC 2.0 over HTTPS at <code>mcp.sms8.io</code>. The server implements MCP revision 2024-11-05 with <code>initialize</code>, <code>tools/list</code>, <code>tools/call</code> and <code>ping</code> methods.</p></details>
-      <details><summary>How do I authenticate?</summary><p>Send your SMS8 API key in the <code>Authorization: Bearer</code> header on every <code>tools/call</code> request. The <code>X-Api-Key</code> header is also accepted. The <code>setup_sms8</code> tool is public; all other tools require authentication.</p></details>
-      <details><summary>What are the rate limits?</summary><p>SMS sending inherits from your SMS8 plan. OTP endpoints add a hard cap of 5 OTPs per phone per 24-hour window, a configurable resend cooldown (30 to 600 seconds, default 60), and a per-OTP attempt cap (default 5).</p></details>
-      <details><summary>Is A2P 10DLC required?</summary><p>No. SMS8 routes messages through your paired Android phone and SIM, so A2P 10DLC registration is not required. No carrier fees, no phone-number provisioning, no per-message charges.</p></details>
-      <details><summary>Does the server log my API key?</summary><p>No. The <code>setup_sms8</code> response masks the key to last 4 chars. OTP endpoints accept POST only and ignore cookies. Use the Bearer header rather than putting the key in URL query strings.</p></details>
-    </div>
-  </div>
-</section>
+    <h4>Reference</h4>
+    <a href="#faq" class="docs-link">FAQ</a>
+  </aside>
 
-<section class="cta-banner">
-  <div class="container">
-    <div class="cta-banner-inner reveal">
-      <h2>Start sending in 60 seconds</h2>
-      <p>Sign up free, pair your Android, paste the MCP config into your AI tool, and ship.</p>
-      <div class="hero-cta">
-        <a class="btn-cta btn-lg" href="https://app.sms8.io/">Create free account</a>
-        <a class="btn-ghost btn-lg" href="/sms-otp-verification-api">Read OTP docs</a>
-      </div>
+  <article class="docs-main">
+
+    <h1>SMS gateway API for <span class="gradient-text">vibe coders</span></h1>
+    <p class="lede">SMS8 is a developer-first SMS gateway built on your own Android phone. Send SMS, MMS, OTP codes and USSD from Claude Code, Cursor, Windsurf or plain curl. One key, one base URL, JSON in and out.</p>
+    <div class="meta-pills">
+      <span>REST · form-urlencoded</span>
+      <span>JSON response</span>
+      <span>MCP-ready</span>
+      <span>No A2P 10DLC</span>
+      <span>No Twilio</span>
     </div>
-  </div>
-</section>
+
+    <h2 id="overview">Overview</h2>
+    <p>The SMS8 SMS gateway exposes a single host with one endpoint per capability. There are no path parameters and no nested resources — every action is a flat <code>POST</code> with form-encoded fields.</p>
+    <ul>
+      <li><strong>Base URL</strong>: <code>https://app.sms8.io/services/</code></li>
+      <li><strong>Method</strong>: <code>POST</code> on every endpoint</li>
+      <li><strong>Body</strong>: <code>application/x-www-form-urlencoded</code></li>
+      <li><strong>Response</strong>: <code>application/json</code></li>
+      <li><strong>Auth</strong>: <code>key=YOUR_SMS8_API_KEY</code> in the body</li>
+    </ul>
+    <div class="callout">
+      <strong>Vibe coding shortcut.</strong> If you live in Claude Code, Cursor or Windsurf, skip the curl and add the MCP server at <code>mcp.sms8.io</code> — your AI assistant will call these same endpoints for you. See <a href="#mcp">AI tools</a>.
+    </div>
+
+    <h2 id="authentication">Authentication</h2>
+    <p>Every request sends the API key in the POST body. The key is per-account and authorises every endpoint. Grab it from the API page of your dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> and regenerate any time — old keys are invalidated immediately.</p>
+<pre><span class="c"># every request</span>
+key=YOUR_SMS8_API_KEY</pre>
+    <div class="callout">
+      <strong>Tip.</strong> The MCP server at <code>mcp.sms8.io</code> accepts the same key as a Bearer header (<code>Authorization: Bearer YOUR_SMS8_API_KEY</code>) — useful when the tool only supports header-based auth.
+    </div>
+
+    <h2 id="first-call">Your first SMS</h2>
+    <p>Send a message to one number from a paired Android using the primary device. Replace <code>YOUR_SMS8_API_KEY</code> and the destination number.</p>
+<pre>curl https://app.sms8.io/services/send.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">"number=+11234567890"</span> \
+  -d <span class="s">"message=Hello from SMS8"</span></pre>
+
+    <h2 id="response-shape">Response shape</h2>
+    <p>Every endpoint wraps its payload in a <code>success</code> envelope.</p>
+<pre>{
+  <span class="k">"success"</span>: <span class="n">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"messages"</span>: [
+      {
+        <span class="k">"ID"</span>: <span class="s">"1"</span>,
+        <span class="k">"number"</span>: <span class="s">"+11234567890"</span>,
+        <span class="k">"message"</span>: <span class="s">"Hello from SMS8"</span>,
+        <span class="k">"deviceID"</span>: <span class="s">"1"</span>,
+        <span class="k">"simSlot"</span>: <span class="s">"0"</span>,
+        <span class="k">"status"</span>: <span class="s">"Pending"</span>,
+        <span class="k">"type"</span>: <span class="s">"sms"</span>,
+        <span class="k">"sentDate"</span>: <span class="s">"2026-05-24T10:30:00+00:00"</span>,
+        <span class="k">"deliveredDate"</span>: <span class="n">null</span>,
+        <span class="k">"groupID"</span>: <span class="s">"…"</span>
+      }
+    ]
+  }
+}</pre>
+
+    <h2 id="errors">Errors</h2>
+    <p>On failure, <code>success</code> is <code>false</code> and the body carries a structured <code>error</code>:</p>
+<pre>{
+  <span class="k">"success"</span>: <span class="n">false</span>,
+  <span class="k">"error"</span>: {
+    <span class="k">"code"</span>: <span class="n">401</span>,
+    <span class="k">"message"</span>: <span class="s">"Invalid API key"</span>
+  }
+}</pre>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td>Missing or malformed parameters</td></tr>
+        <tr><td>401</td><td>Missing or invalid API key</td></tr>
+        <tr><td>402</td><td>Out of message credits</td></tr>
+        <tr><td>403</td><td>Action not allowed for this account or plan</td></tr>
+        <tr><td>404</td><td>Resource not found (e.g. unknown message ID)</td></tr>
+        <tr><td>429</td><td>Rate limit hit — slow down and retry</td></tr>
+        <tr><td>500</td><td>Server error — please retry</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="send">Send SMS &amp; MMS</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/send.php</code>
+      <span class="ep-desc">single, batch, list broadcast, MMS</span>
+    </div>
+    <p>One endpoint covers four send modes: single message, batch (different message per number), broadcast to a contacts list, and MMS with attachments. Pick the mode by which fields you send.</p>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>key</td><td>string</td><td>API key, required</td></tr>
+        <tr><td>number</td><td>string</td><td>E.164 phone, or comma-separated list, for the single/blast mode</td></tr>
+        <tr><td>message</td><td>string</td><td>Message body, required with <code>number</code> or <code>listID</code></td></tr>
+        <tr><td>messages</td><td>JSON</td><td>Array of <code>{number, message, type, attachments}</code> for true batch mode</td></tr>
+        <tr><td>listID</td><td>int</td><td>Send to every contact in this list</td></tr>
+        <tr><td>devices</td><td>JSON|int</td><td>Single ID, JSON array, or SIM-qualified form <code>"2|0"</code></td></tr>
+        <tr><td>option</td><td>0|1|2</td><td>See <a href="#routing">routing</a> — specified / all devices / all SIMs</td></tr>
+        <tr><td>useRandomDevice</td><td>0|1</td><td>Pick one device at random from the selection</td></tr>
+        <tr><td>prioritize</td><td>0|1</td><td>Jump the queue (OTPs, replies)</td></tr>
+        <tr><td>type</td><td>sms|mms</td><td>Defaults to sms</td></tr>
+        <tr><td>attachments</td><td>string</td><td>Comma-separated image URLs (MMS only)</td></tr>
+        <tr><td>schedule</td><td>unix ts</td><td>Send at this future timestamp</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Send a batch with one call</h3>
+<pre>curl https://app.sms8.io/services/send.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">'messages=[{"number":"+1...","message":"hi 1"},{"number":"+1...","message":"hi 2"}]'</span> \
+  -d <span class="s">"option=2"</span></pre>
+
+    <h3>Broadcast to a contacts list</h3>
+<pre>curl https://app.sms8.io/services/send.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">"listID=1"</span> \
+  -d <span class="s">"message=Sale ends tonight"</span></pre>
+
+    <h2 id="read-messages">Read messages</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/read-messages.php</code>
+      <span class="ep-desc">by ID, group, status, device, time</span>
+    </div>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>key</td><td>string</td><td>API key, required</td></tr>
+        <tr><td>id</td><td>int</td><td>Get one message by ID</td></tr>
+        <tr><td>groupId</td><td>string</td><td>Group ID returned at send time — useful for batches</td></tr>
+        <tr><td>status</td><td>string</td><td><code>Received</code>, <code>Sent</code>, <code>Pending</code>, <code>Failed</code></td></tr>
+        <tr><td>deviceID</td><td>int</td><td>Filter by device</td></tr>
+        <tr><td>simSlot</td><td>int</td><td>0 for first SIM, 1 for second</td></tr>
+        <tr><td>startTimestamp</td><td>unix ts</td><td>Inclusive lower bound</td></tr>
+        <tr><td>endTimestamp</td><td>unix ts</td><td>Inclusive upper bound</td></tr>
+      </tbody>
+    </table>
+<pre><span class="c"># last 24h of received SMS on SIM 0 of device 8</span>
+curl https://app.sms8.io/services/read-messages.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">"status=Received"</span> \
+  -d <span class="s">"deviceID=8"</span> \
+  -d <span class="s">"simSlot=0"</span> \
+  -d <span class="s">"startTimestamp=$(( $(date +%s) - 86400 ))"</span></pre>
+
+    <h2 id="resend">Resend</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/resend.php</code>
+      <span class="ep-desc">retry by ID, group, status</span>
+    </div>
+    <p>Same filter shape as <a href="#read-messages">read-messages</a>. Retry one ID, every message in a group, or every message of a given status in a time window.</p>
+
+    <h2 id="contacts">Contacts</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/manage-contacts.php</code>
+      <span class="ep-desc">add, resubscribe, unsubscribe</span>
+    </div>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>key</td><td>string</td><td>API key, required</td></tr>
+        <tr><td>listID</td><td>int</td><td>Target contacts list, required</td></tr>
+        <tr><td>number</td><td>string</td><td>Contact phone, required</td></tr>
+        <tr><td>name</td><td>string</td><td>Friendly name (add only)</td></tr>
+        <tr><td>resubscribe</td><td>0|1</td><td>Resubscribe if previously unsubscribed</td></tr>
+        <tr><td>unsubscribe</td><td>0|1</td><td>Remove from list</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="devices">Devices</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/get-devices.php</code>
+      <span class="ep-desc">list paired Android devices</span>
+    </div>
+    <p>Returns every enabled device with model, SIM slots and primary flag. Useful before constructing <code>devices</code> on a send call.</p>
+
+    <h2 id="ussd">USSD</h2>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/send-ussd-request.php</code>
+      <span class="ep-desc">e.g. *150# to check balance</span>
+    </div>
+    <div class="endpoint-row">
+      <span class="method-pill">POST</span>
+      <code>/services/read-ussd-requests.php</code>
+      <span class="ep-desc">look up sent USSD requests</span>
+    </div>
+    <p>Run a carrier USSD code on a paired device and read back the response. Handy for prepaid balance checks and operator menus.</p>
+
+    <h2 id="webhooks">Inbound webhooks</h2>
+    <p>Set a webhook URL on the API page of your dashboard. SMS8 will <code>POST</code> every received SMS to that URL with an HMAC-SHA256 signature, so your receiver can verify the payload came from SMS8 and was not tampered with.</p>
+    <p>From AI tools, register the webhook via the MCP <code>create_webhook</code> tool — it validates the URL against an SSRF block-list before saving.</p>
+
+    <h2 id="routing">Device &amp; SIM routing</h2>
+    <p>Every send endpoint takes the same routing controls. Mix them to load-balance across phones and SIMs.</p>
+    <table>
+      <thead><tr><th>option</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Use exactly the IDs in <code>devices</code>. SIM slots use the form <code>"2|0"</code> (device 2, SIM 0).</td></tr>
+        <tr><td>1</td><td>Use every enabled device, default SIM each. Batch is split across them.</td></tr>
+        <tr><td>2</td><td>Use every enabled device and every SIM. Maximum throughput on dual-SIM phones.</td></tr>
+      </tbody>
+    </table>
+    <p>Set <code>useRandomDevice=1</code> to pick exactly one sender from the selection at random — useful for OTPs.</p>
+
+    <h2 id="scheduling">Scheduling</h2>
+    <p>Pass <code>schedule</code> as a unix timestamp to defer a send. Schedule the same message to many numbers, or send a batch on a future date — both work.</p>
+
+    <h2 id="balance">Credit balance</h2>
+    <p>Call <code>/services/send.php</code> with only the <code>key</code> field. The response's <code>credits</code> field returns the remaining credits or <code>"Unlimited"</code>.</p>
+
+    <h2 id="mcp">Use it from Claude Code, Cursor &amp; Windsurf</h2>
+    <p>SMS8 ships an MCP server at <code>mcp.sms8.io</code> that wraps every REST endpoint above in a JSON-RPC tool. Same API key, no separate account.</p>
+<pre><span class="c">// ~/.config/claude/mcp-servers.json (Claude Code)</span>
+<span class="c">// ~/.cursor/mcp.json (Cursor)</span>
+<span class="c">// ~/.codeium/windsurf/mcp_config.json (Windsurf)</span>
+{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"sms8"</span>: {
+      <span class="k">"url"</span>: <span class="s">"https://mcp.sms8.io"</span>,
+      <span class="k">"transport"</span>: <span class="s">"http"</span>,
+      <span class="k">"headers"</span>: {
+        <span class="k">"Authorization"</span>: <span class="s">"Bearer YOUR_SMS8_API_KEY"</span>
+      }
+    }
+  }
+}</pre>
+    <table>
+      <thead><tr><th>MCP tool</th><th>Wraps</th></tr></thead>
+      <tbody>
+        <tr><td>send_sms</td><td>/services/send.php</td></tr>
+        <tr><td>send_otp</td><td>OTP store + /services/send.php</td></tr>
+        <tr><td>verify_otp</td><td>OTP store, constant-time compare</td></tr>
+        <tr><td>get_messages</td><td>/services/read-messages.php</td></tr>
+        <tr><td>list_devices</td><td>/services/get-devices.php</td></tr>
+        <tr><td>create_webhook</td><td>user webhook URL (SSRF-checked)</td></tr>
+        <tr><td>setup_sms8</td><td>account + devices handshake</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="sdk-php">PHP SDK</h2>
+    <p>The dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> renders a complete PHP class with your API key prefilled — <code>sendSingleMessage</code>, <code>sendMessages</code>, <code>sendMessageToContactsList</code>, <code>getMessageByID</code>, <code>getMessagesByStatus</code>, <code>resendMessageByID</code>, <code>addContact</code>, <code>unsubscribeContact</code>, <code>getBalance</code>, <code>sendUssdRequest</code>, <code>getDevices</code>.</p>
+<pre>$msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"Hello from SMS8"</span>);
+
+$msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"From device 1"</span>, <span class="n">1</span>);
+
+$msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"From SIM 0"</span>, <span class="s">"1|0"</span>);
+
+$msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"In 2 min"</span>, <span class="n">null</span>, strtotime(<span class="s">"+2 minutes"</span>));</pre>
+
+    <h2 id="sdk-csharp">C# SDK</h2>
+    <p>A complete C# <code>API</code> class is also prefilled on the dashboard. Same surface as the PHP SDK, ready for .NET / Unity / Xamarin projects.</p>
+<pre>SMS.API.SendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"Hello from SMS8"</span>);
+
+var msg = SMS.API.SendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"From device 1"</span>, <span class="s">"1"</span>);
+
+var msgs = SMS.API.SendMessages(messages, SMS.API.Option.USE_ALL_SIMS);</pre>
+
+    <h2 id="sdk-curl">curl recipes</h2>
+<pre><span class="c"># Send and prioritize an OTP-style message</span>
+curl https://app.sms8.io/services/send.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">"number=+11234567890"</span> \
+  -d <span class="s">"message=Your code is 482910"</span> \
+  -d <span class="s">"prioritize=1"</span> \
+  -d <span class="s">"devices=1"</span>
+
+<span class="c"># Get message credits</span>
+curl https://app.sms8.io/services/send.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span>
+
+<span class="c"># Add a contact and resubscribe if they exist</span>
+curl https://app.sms8.io/services/manage-contacts.php \
+  -d <span class="s">"key=YOUR_SMS8_API_KEY"</span> \
+  -d <span class="s">"listID=1"</span> \
+  -d <span class="s">"number=+11234567890"</span> \
+  -d <span class="s">"name=Alex"</span> \
+  -d <span class="s">"resubscribe=1"</span></pre>
+
+    <h2 id="faq">FAQ</h2>
+    <h3>What is the SMS8 SMS gateway API?</h3>
+    <p>An HTTP API that sends SMS and MMS, manages contacts, runs USSD, and reads your inbox. Every endpoint is a POST under <code>https://app.sms8.io/services/</code> authenticated with a <code>key</code> parameter. Messages route through a paired Android phone so there is no A2P 10DLC and no per-message fee.</p>
+
+    <h3>How do I use this from Claude Code, Cursor or Windsurf?</h3>
+    <p>Add the MCP server at <code>mcp.sms8.io</code> to your AI tool with your SMS8 API key as a Bearer token. The MCP wraps the same REST endpoints in JSON-RPC tools like <code>send_sms</code>, <code>send_otp</code> and <code>verify_otp</code>. See the <a href="#mcp">AI tools section</a>.</p>
+
+    <h3>Can I send without a Twilio number?</h3>
+    <p>Yes. SMS8 uses your own Android phone and SIM card as the gateway. No Twilio number, no A2P 10DLC registration, no per-message carrier fees.</p>
+
+    <h3>How do I receive inbound SMS?</h3>
+    <p>Set a webhook URL on the API page of your dashboard. SMS8 POSTs every received SMS to that URL with an HMAC signature so you can verify the payload.</p>
+
+    <h3>What rate limits apply?</h3>
+    <p>SMS throughput is bounded by the speed of your paired devices and your plan's monthly volume. The OTP flow adds a hard cap of 5 codes per phone per 24h plus a configurable resend cooldown.</p>
+
+    <h3>How do I rotate the API key?</h3>
+    <p>Regenerate it from the dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a>. The old key is invalidated immediately.</p>
+
+    <div style="margin-top: 56px; padding: 28px; border-radius: 14px; background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(99,102,241,0.08)); border: 1px solid rgba(168,85,247,0.25);">
+      <h2 style="margin: 0 0 8px; font-size: 22px;">Build your first integration</h2>
+      <p style="margin: 0 0 16px; color: #c8c8d8;">Sign up free, pair your Android, grab your key, ship.</p>
+      <a class="btn-cta" href="https://app.sms8.io/">Create free account</a>
+      &nbsp;
+      <a class="btn-ghost" href="/sms-otp-verification-api">Read OTP docs</a>
+    </div>
+
+  </article>
+</div>
+
+<script>
+(function(){
+  // Highlight the side-nav link of the section currently in view.
+  var links = document.querySelectorAll('.docs-side a.docs-link');
+  if (!links.length) return;
+  var map = {};
+  links.forEach(function(a){
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) {
+        links.forEach(function(l){ l.classList.remove('is-active'); });
+        var a = map[e.target.id];
+        if (a) a.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+})();
+</script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
