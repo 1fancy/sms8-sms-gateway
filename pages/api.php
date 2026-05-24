@@ -182,6 +182,138 @@ require __DIR__ . '/_header.php';
   margin-left: auto; color: #888899; font-size: 13px;
 }
 
+/* Playground */
+.playground {
+  margin: 0 0 56px;
+  border: 1px solid rgba(168,85,247,0.25);
+  background: linear-gradient(180deg, rgba(168,85,247,0.06), rgba(99,102,241,0.03));
+  border-radius: 14px;
+  overflow: hidden;
+}
+.playground-head {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.playground-head h2 { margin: 0 0 4px; font-size: 18px; color: #fff; }
+.playground-head p { margin: 0; font-size: 13.5px; color: #a8a8bd; }
+.playground-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+.playground-form {
+  padding: 20px 22px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.pg-field { margin-bottom: 14px; }
+.pg-field label {
+  display: block;
+  font-size: 12px; font-weight: 600;
+  color: #c4b5fd;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pg-field input,
+.pg-field select,
+.pg-field textarea {
+  width: 100%;
+  background: #0a0a14;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #e8e8f0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.pg-field input:focus,
+.pg-field select:focus,
+.pg-field textarea:focus {
+  border-color: rgba(168,85,247,0.6);
+  background: #0d0d18;
+}
+.pg-field textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+.pg-field-mono input { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; }
+.pg-hint { font-size: 12px; color: #888899; margin-top: 5px; }
+.pg-actions {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 6px;
+}
+.pg-actions .btn-cta { font-size: 14px; padding: 10px 18px; }
+.pg-status {
+  font-size: 13px;
+  color: #888899;
+}
+.pg-status.is-ok    { color: #86efac; }
+.pg-status.is-err   { color: #fca5a5; }
+.pg-status.is-busy  { color: #c4b5fd; }
+
+.playground-output {
+  padding: 20px 22px;
+  background: rgba(0,0,0,0.18);
+  min-width: 0;
+}
+.pg-tabs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 14px;
+}
+.pg-tab {
+  background: transparent;
+  border: 0;
+  color: #888899;
+  font-size: 13px; font-weight: 500;
+  padding: 8px 12px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.pg-tab:hover { color: #ddd6fe; }
+.pg-tab.is-active {
+  color: #c4b5fd;
+  border-bottom-color: #a855f7;
+}
+.pg-panel { display: none; }
+.pg-panel.is-active { display: block; }
+.pg-panel pre {
+  margin: 0;
+  max-height: 360px;
+  font-size: 12.5px;
+}
+.pg-response {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #0a0a14;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12.5px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: #d8d8e8;
+  max-height: 240px; overflow: auto;
+  white-space: pre-wrap; word-break: break-word;
+}
+.pg-response.is-ok  { border-color: rgba(134,239,172,0.35); }
+.pg-response.is-err { border-color: rgba(252,165,165,0.35); }
+.pg-copy {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: rgba(168,85,247,0.18);
+  border: 1px solid rgba(168,85,247,0.3);
+  color: #ddd6fe;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pg-copy:hover { background: rgba(168,85,247,0.28); }
+.pg-panel { position: relative; }
+
+@media (max-width: 740px) {
+  .playground-body { grid-template-columns: 1fr; }
+  .playground-form { border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+}
+
 @media (max-width: 900px) {
   .docs-shell { grid-template-columns: 1fr; padding-top: 96px; }
   .docs-side {
@@ -197,6 +329,9 @@ require __DIR__ . '/_header.php';
 <div class="docs-shell">
 
   <aside class="docs-side" aria-label="API documentation sections">
+    <h4>Try it</h4>
+    <a href="#playground" class="docs-link">Live playground</a>
+
     <h4>Get started</h4>
     <a href="#overview" class="docs-link">Overview</a>
     <a href="#authentication" class="docs-link">Authentication</a>
@@ -240,6 +375,81 @@ require __DIR__ . '/_header.php';
       <span>MCP-ready</span>
       <span>No A2P 10DLC</span>
       <span>No Twilio</span>
+    </div>
+
+    <h2 id="playground">Live playground</h2>
+    <p>Try the SMS gateway right here. Paste your API key, fill in a phone and message, hit <strong>Send</strong>. We will POST to <code>/services/send.php</code> on your behalf and show the real JSON response — then switch tabs to grab the exact request as <strong>curl</strong>, <strong>PHP</strong>, <strong>JavaScript</strong>, <strong>Python</strong> or as a <strong>Claude Code / Cursor</strong> prompt.</p>
+
+    <div class="playground" id="pg">
+      <div class="playground-head">
+        <h2>Test &amp; copy</h2>
+        <p>Sends one real SMS. Uses 1 credit. Your API key never leaves your browser — the request goes directly to app.sms8.io.</p>
+      </div>
+      <div class="playground-body">
+        <form class="playground-form" id="pg-form" autocomplete="off">
+          <div class="pg-field pg-field-mono">
+            <label for="pg-key">API key</label>
+            <input type="text" id="pg-key" name="key" placeholder="sk_…" spellcheck="false" required>
+            <p class="pg-hint">From <a href="https://app.sms8.io/api.php" target="_blank" rel="noopener">app.sms8.io/api.php</a> · stays in your browser</p>
+          </div>
+          <div class="pg-field">
+            <label for="pg-number">Phone number</label>
+            <input type="text" id="pg-number" name="number" placeholder="+11234567890" required>
+          </div>
+          <div class="pg-field">
+            <label for="pg-message">Message</label>
+            <textarea id="pg-message" name="message" rows="3" placeholder="Hello from the SMS8 playground" required></textarea>
+          </div>
+          <div class="pg-field">
+            <label for="pg-option">Routing</label>
+            <select id="pg-option" name="option">
+              <option value="">Primary device (default)</option>
+              <option value="1">Use all devices (option=1)</option>
+              <option value="2">Use all SIMs (option=2)</option>
+            </select>
+          </div>
+          <div class="pg-field">
+            <label for="pg-device">Device ID (optional)</label>
+            <input type="text" id="pg-device" name="devices" placeholder="e.g. 1 or 2|0">
+            <p class="pg-hint">Leave blank for primary. Use <code>2|0</code> for device 2, SIM slot 0.</p>
+          </div>
+          <div class="pg-actions">
+            <button type="submit" class="btn-cta" id="pg-submit">Send SMS</button>
+            <span class="pg-status" id="pg-status">Ready</span>
+          </div>
+        </form>
+
+        <div class="playground-output">
+          <div class="pg-tabs" role="tablist">
+            <button type="button" class="pg-tab is-active" data-lang="curl"   role="tab">curl</button>
+            <button type="button" class="pg-tab"            data-lang="php"    role="tab">PHP</button>
+            <button type="button" class="pg-tab"            data-lang="js"     role="tab">JavaScript</button>
+            <button type="button" class="pg-tab"            data-lang="python" role="tab">Python</button>
+            <button type="button" class="pg-tab"            data-lang="mcp"    role="tab">Claude Code / MCP</button>
+          </div>
+          <div class="pg-panel is-active" data-lang="curl">
+            <button type="button" class="pg-copy" data-target="pg-code-curl">Copy</button>
+            <pre id="pg-code-curl"></pre>
+          </div>
+          <div class="pg-panel" data-lang="php">
+            <button type="button" class="pg-copy" data-target="pg-code-php">Copy</button>
+            <pre id="pg-code-php"></pre>
+          </div>
+          <div class="pg-panel" data-lang="js">
+            <button type="button" class="pg-copy" data-target="pg-code-js">Copy</button>
+            <pre id="pg-code-js"></pre>
+          </div>
+          <div class="pg-panel" data-lang="python">
+            <button type="button" class="pg-copy" data-target="pg-code-python">Copy</button>
+            <pre id="pg-code-python"></pre>
+          </div>
+          <div class="pg-panel" data-lang="mcp">
+            <button type="button" class="pg-copy" data-target="pg-code-mcp">Copy</button>
+            <pre id="pg-code-mcp"></pre>
+          </div>
+          <div class="pg-response" id="pg-response" hidden></div>
+        </div>
+      </div>
     </div>
 
     <h2 id="overview">Overview</h2>
@@ -546,6 +756,190 @@ curl https://app.sms8.io/services/manage-contacts.php \
 </div>
 
 <script>
+(function(){
+  // ── API playground ─────────────────────────────────────────────────
+  var form    = document.getElementById('pg-form');
+  if (!form) return;
+  var status  = document.getElementById('pg-status');
+  var submit  = document.getElementById('pg-submit');
+  var respEl  = document.getElementById('pg-response');
+  var keyEl   = document.getElementById('pg-key');
+  var numEl   = document.getElementById('pg-number');
+  var msgEl   = document.getElementById('pg-message');
+  var optEl   = document.getElementById('pg-option');
+  var devEl   = document.getElementById('pg-device');
+
+  function esc(s){ return String(s).replace(/[\\"'`$]/g, function(c){ return '\\' + c; }); }
+  function jsStr(s){ return JSON.stringify(String(s)); }
+  function maskKey(k){
+    if (!k) return 'YOUR_SMS8_API_KEY';
+    if (k.length <= 8) return k;
+    return k.slice(0, 4) + '…' + k.slice(-4);
+  }
+
+  function renderSnippets(){
+    var key    = keyEl.value.trim() || 'YOUR_SMS8_API_KEY';
+    var number = numEl.value.trim() || '+11234567890';
+    var msg    = msgEl.value || 'Hello from SMS8';
+    var opt    = optEl.value;
+    var dev    = devEl.value.trim();
+
+    // curl
+    var lines = ['curl https://app.sms8.io/services/send.php \\\n  -d "key=' + key + '" \\\n  -d "number=' + number + '" \\\n  -d "message=' + msg.replace(/"/g,'\\"') + '"'];
+    if (opt) lines[0] += ' \\\n  -d "option=' + opt + '"';
+    if (dev) lines[0] += ' \\\n  -d "devices=' + dev + '"';
+    document.getElementById('pg-code-curl').textContent = lines[0];
+
+    // PHP
+    var phpData = "  'key'     => '" + esc(key) + "',\n  'number'  => '" + esc(number) + "',\n  'message' => '" + esc(msg) + "'";
+    if (opt) phpData += ",\n  'option'  => '" + opt + "'";
+    if (dev) phpData += ",\n  'devices' => '" + esc(dev) + "'";
+    var php = "$ch = curl_init('https://app.sms8.io/services/send.php');\n" +
+              "curl_setopt($ch, CURLOPT_POST, true);\n" +
+              "curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n" +
+              "curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([\n" + phpData + "\n]));\n" +
+              "$res = json_decode(curl_exec($ch), true);\n" +
+              "if ($res['success']) {\n" +
+              "    $msg = $res['data']['messages'][0];\n" +
+              "}";
+    document.getElementById('pg-code-php').textContent = php;
+
+    // JS / Node fetch
+    var jsBody = "    key: " + jsStr(key) + ",\n" +
+                 "    number: " + jsStr(number) + ",\n" +
+                 "    message: " + jsStr(msg);
+    if (opt) jsBody += ",\n    option: " + jsStr(opt);
+    if (dev) jsBody += ",\n    devices: " + jsStr(dev);
+    var js = "const res = await fetch('https://app.sms8.io/services/send.php', {\n" +
+             "  method: 'POST',\n" +
+             "  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },\n" +
+             "  body: new URLSearchParams({\n" + jsBody + "\n  })\n" +
+             "});\n" +
+             "const json = await res.json();\n" +
+             "if (json.success) {\n" +
+             "  console.log(json.data.messages[0]);\n" +
+             "}";
+    document.getElementById('pg-code-js').textContent = js;
+
+    // Python
+    var pyData = "    'key': " + jsStr(key) + ",\n" +
+                 "    'number': " + jsStr(number) + ",\n" +
+                 "    'message': " + jsStr(msg);
+    if (opt) pyData += ",\n    'option': " + jsStr(opt);
+    if (dev) pyData += ",\n    'devices': " + jsStr(dev);
+    var py = "import requests\n\n" +
+             "res = requests.post('https://app.sms8.io/services/send.php', data={\n" + pyData + "\n})\n" +
+             "json = res.json()\n" +
+             "if json['success']:\n" +
+             "    msg = json['data']['messages'][0]\n" +
+             "    print(msg)";
+    document.getElementById('pg-code-python').textContent = py;
+
+    // MCP prompt
+    var mcpExtras = '';
+    if (opt === '1') mcpExtras = ' Use all my paired devices.';
+    else if (opt === '2') mcpExtras = ' Spread across all SIMs of all paired devices.';
+    else if (dev) mcpExtras = ' Use device ' + dev + '.';
+    var mcp = "// In Claude Code, Cursor or Windsurf with the SMS8 MCP added,\n" +
+              "// paste this prompt:\n\n" +
+              "Send an SMS to " + number + " saying \"" + msg.replace(/"/g,'\\"') + "\"" +
+              " via the sms8 MCP." + mcpExtras + "\n\n" +
+              "// MCP config (one-time):\n" +
+              "// ~/.config/claude/mcp-servers.json\n" +
+              "{\n" +
+              "  \"mcpServers\": {\n" +
+              "    \"sms8\": {\n" +
+              "      \"url\": \"https://mcp.sms8.io\",\n" +
+              "      \"transport\": \"http\",\n" +
+              "      \"headers\": {\n" +
+              "        \"Authorization\": \"Bearer " + maskKey(keyEl.value.trim()) + "\"\n" +
+              "      }\n" +
+              "    }\n" +
+              "  }\n" +
+              "}";
+    document.getElementById('pg-code-mcp').textContent = mcp;
+  }
+
+  // Tab switching
+  var tabs   = form.parentElement.querySelectorAll('.pg-tab');
+  var panels = form.parentElement.querySelectorAll('.pg-panel');
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      var lang = t.getAttribute('data-lang');
+      tabs.forEach(function(x){ x.classList.toggle('is-active', x === t); });
+      panels.forEach(function(p){ p.classList.toggle('is-active', p.getAttribute('data-lang') === lang); });
+    });
+  });
+
+  // Copy buttons
+  form.parentElement.querySelectorAll('.pg-copy').forEach(function(b){
+    b.addEventListener('click', function(){
+      var tgt = document.getElementById(b.getAttribute('data-target'));
+      if (!tgt) return;
+      navigator.clipboard.writeText(tgt.textContent).then(function(){
+        var prev = b.textContent;
+        b.textContent = 'Copied';
+        setTimeout(function(){ b.textContent = prev; }, 1200);
+      });
+    });
+  });
+
+  // Re-render snippets on any field change (or load)
+  [keyEl, numEl, msgEl, optEl, devEl].forEach(function(el){
+    el.addEventListener('input',  renderSnippets);
+    el.addEventListener('change', renderSnippets);
+  });
+  renderSnippets();
+
+  // Submit → real send via app.sms8.io (CORS allowed for *.sms8.io)
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!keyEl.value.trim()) { status.textContent = 'Add your API key first'; status.className = 'pg-status is-err'; return; }
+    submit.disabled = true;
+    status.textContent = 'Sending…';
+    status.className  = 'pg-status is-busy';
+    respEl.hidden = true;
+
+    var body = new URLSearchParams();
+    body.set('key',     keyEl.value.trim());
+    body.set('number',  numEl.value.trim());
+    body.set('message', msgEl.value);
+    if (optEl.value) body.set('option',  optEl.value);
+    if (devEl.value.trim()) body.set('devices', devEl.value.trim());
+
+    fetch('https://app.sms8.io/services/send.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body
+    })
+    .then(function(r){ return r.text().then(function(t){ return { ok: r.ok, status: r.status, text: t }; }); })
+    .then(function(out){
+      var parsed; try { parsed = JSON.parse(out.text); } catch(e) { parsed = null; }
+      var pretty = parsed ? JSON.stringify(parsed, null, 2) : out.text;
+      respEl.hidden = false;
+      respEl.textContent = pretty;
+      if (parsed && parsed.success) {
+        status.textContent = 'Sent · check the device';
+        status.className   = 'pg-status is-ok';
+        respEl.classList.add('is-ok'); respEl.classList.remove('is-err');
+      } else {
+        var msg = (parsed && parsed.error && parsed.error.message) || ('HTTP ' + out.status);
+        status.textContent = 'Failed · ' + msg;
+        status.className   = 'pg-status is-err';
+        respEl.classList.add('is-err'); respEl.classList.remove('is-ok');
+      }
+    })
+    .catch(function(err){
+      status.textContent = 'Network error · ' + err.message;
+      status.className   = 'pg-status is-err';
+      respEl.hidden = false;
+      respEl.textContent = err.message;
+      respEl.classList.add('is-err'); respEl.classList.remove('is-ok');
+    })
+    .finally(function(){ submit.disabled = false; });
+  });
+})();
+
 (function(){
   // Highlight the side-nav link of the section currently in view.
   var links = document.querySelectorAll('.docs-side a.docs-link');
