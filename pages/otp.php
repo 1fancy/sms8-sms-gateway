@@ -1,7 +1,7 @@
 <?php
 $page      = 'otp';
-$title     = 'SMS OTP Verification API | SMS8 MCP Phone Verification for Claude Code, Cursor';
-$desc      = 'SMS OTP verification API for the SMS8 MCP server. Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client through your Android phone as the SMS gateway. Configurable code length, expiry, and attempts. Hard per-phone abuse cap. No A2P 10DLC, no per-message fees.';
+$title     = 'Android SMS OTP &amp; Phone Verification API for Claude Code, Cursor';
+$desc      = 'Android SMS OTP verification API. Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client. Configurable code length, expiry and attempts, constant-time compare, hard 5-per-phone-per-day abuse cap. No Twilio, no A2P 10DLC, no per-message fees.';
 $canonical = 'https://mcp.sms8.io/sms-otp-verification-api';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
@@ -22,9 +22,9 @@ require __DIR__ . '/_header.php';
 <section class="page-hero page-hero-sm">
   <div class="container">
     <div class="page-hero-inner reveal">
-      <span class="hero-badge"><span class="badge-dot"></span>OTP reference</span>
-      <h1>OTP and <span class="gradient-text">phone verification</span> through SMS8</h1>
-      <p class="lede">Send and verify one-time passwords from Claude Code, Cursor, Windsurf or any HTTP client. Configurable code length, expiry, and attempts. Hard per-phone abuse cap.</p>
+      <span class="hero-badge"><span class="badge-dot"></span>Android OTP API</span>
+      <h1>Android SMS <span class="gradient-text">OTP &amp; phone verification</span> for AI coders</h1>
+      <p class="lede">Drop one-time-password verification into any project from Claude Code, Cursor, Windsurf or plain HTTP. Codes route through your paired Android phone, the compare runs in constant time, and a hard 5-per-phone-per-day cap stops abuse before it starts.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/otp">Try the live test</a>
         <a class="btn-ghost btn-lg" href="/sms-api-documentation">API reference</a>
@@ -72,20 +72,20 @@ require __DIR__ . '/_header.php';
         <h3 style="color:#c4b5fd;font-size:17px;margin-bottom:12px;">Send endpoint</h3>
         <p><code style="background:rgba(168,85,247,0.15);padding:2px 8px;border-radius:4px;color:#c4b5fd;">POST https://app.sms8.io/ajax/otp-send.php</code></p>
         <ul class="check-list" style="margin-top:14px;">
-          <li><strong>phone</strong> &mdash; required, E.164</li>
-          <li><strong>length</strong> &mdash; 4 to 8 digits, default 6</li>
-          <li><strong>expires_in</strong> &mdash; 60 to 900 seconds, default 300</li>
-          <li><strong>max_attempts</strong> &mdash; 1 to 10, default 5</li>
-          <li><strong>template</strong> &mdash; body with <code>{code}</code> placeholder</li>
-          <li><strong>option / devices / useRandomDevice</strong> &mdash; device picker</li>
+          <li><strong>phone</strong> - required, E.164</li>
+          <li><strong>length</strong> - 4 to 8 digits, default 6</li>
+          <li><strong>expires_in</strong> - 60 to 900 seconds, default 300</li>
+          <li><strong>max_attempts</strong> - 1 to 10, default 5</li>
+          <li><strong>template</strong> - body with <code>{code}</code> placeholder</li>
+          <li><strong>option / devices / useRandomDevice</strong> - device picker</li>
         </ul>
       </div>
       <div class="split-text">
         <h3 style="color:#c4b5fd;font-size:17px;margin-bottom:12px;">Verify endpoint</h3>
         <p><code style="background:rgba(168,85,247,0.15);padding:2px 8px;border-radius:4px;color:#c4b5fd;">POST https://app.sms8.io/ajax/otp-verify.php</code></p>
         <ul class="check-list" style="margin-top:14px;">
-          <li><strong>phone</strong> &mdash; required, E.164</li>
-          <li><strong>code</strong> &mdash; the code the user typed</li>
+          <li><strong>phone</strong> - required, E.164</li>
+          <li><strong>code</strong> - the code the user typed</li>
         </ul>
         <p style="margin-top:14px;"><strong>Responses</strong>:</p>
         <ul class="check-list" style="margin-top:6px;">

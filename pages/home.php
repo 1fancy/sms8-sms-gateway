@@ -5,7 +5,7 @@ $desc      = 'SMS gateway MCP server for AI coding tools. Send SMS, issue and ve
 $canonical = 'https://mcp.sms8.io/';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"SMS8 MCP Server","description":"SMS gateway MCP server — send SMS, issue and verify OTPs, register webhooks from Claude Code, Cursor and Windsurf.","codeRepository":"https://github.com/1fancy/sms8-sms-gateway","programmingLanguage":"PHP","license":"https://opensource.org/licenses/MIT","url":"https://mcp.sms8.io","keywords":"sms gateway, android sms gateway, sms mcp, sms api claude code, sms api cursor, sms api windsurf, vibe coding sms","publisher":{"@type":"Organization","name":"SMS8","url":"https://sms8.io"}}
+{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"SMS8 MCP Server","description":"SMS gateway MCP server: send SMS, issue and verify OTPs, register webhooks from Claude Code, Cursor and Windsurf.","codeRepository":"https://github.com/1fancy/sms8-sms-gateway","programmingLanguage":"PHP","license":"https://opensource.org/licenses/MIT","url":"https://mcp.sms8.io","keywords":"sms gateway, android sms gateway, sms mcp, sms api claude code, sms api cursor, sms api windsurf, vibe coding sms","publisher":{"@type":"Organization","name":"SMS8","url":"https://sms8.io"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[

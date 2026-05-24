@@ -1,6 +1,6 @@
 <?php
 $page      = 'api';
-$title     = 'SMS Gateway API for Vibe Coding — Claude Code, Cursor, Windsurf | SMS8';
+$title     = 'SMS Gateway API for Vibe Coding: Claude Code, Cursor, Windsurf | SMS8';
 $desc      = 'SMS gateway API built for AI-assisted coding. Send SMS and MMS, verify phone numbers, run USSD and read your inbox from Claude Code, Cursor, Windsurf or plain curl. Android-powered, no Twilio, no A2P 10DLC.';
 $canonical = 'https://mcp.sms8.io/sms-api-documentation';
 $jsonld = <<<'HTML'
@@ -21,7 +21,7 @@ require __DIR__ . '/_header.php';
 ?>
 
 <style>
-/* Docs layout (scoped to this page) — left nav, scrollable content */
+/* Docs layout (scoped to this page): left nav, scrollable content */
 .docs-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -378,12 +378,12 @@ require __DIR__ . '/_header.php';
     </div>
 
     <h2 id="playground">Live playground</h2>
-    <p>Try the SMS gateway right here. Paste your API key, fill in a phone and message, hit <strong>Send</strong>. We will POST to <code>/services/send.php</code> on your behalf and show the real JSON response — then switch tabs to grab the exact request as <strong>curl</strong>, <strong>PHP</strong>, <strong>JavaScript</strong>, <strong>Python</strong> or as a <strong>Claude Code / Cursor</strong> prompt.</p>
+    <p>Try the SMS gateway right here. Paste your API key, fill in a phone and message, hit <strong>Send</strong>. We will POST to <code>/services/send.php</code> on your behalf and show the real JSON response, then switch tabs to grab the exact request as <strong>curl</strong>, <strong>PHP</strong>, <strong>JavaScript</strong>, <strong>Python</strong> or as a <strong>Claude Code / Cursor</strong> prompt.</p>
 
     <div class="playground" id="pg">
       <div class="playground-head">
         <h2>Test &amp; copy</h2>
-        <p>Sends one real SMS. Uses 1 credit. Your API key never leaves your browser — the request goes directly to app.sms8.io.</p>
+        <p>Sends one real SMS. Uses 1 credit. Your API key never leaves your browser. The request goes directly to app.sms8.io.</p>
       </div>
       <div class="playground-body">
         <form class="playground-form" id="pg-form" autocomplete="off">
@@ -425,7 +425,8 @@ require __DIR__ . '/_header.php';
             <button type="button" class="pg-tab"            data-lang="php"    role="tab">PHP</button>
             <button type="button" class="pg-tab"            data-lang="js"     role="tab">JavaScript</button>
             <button type="button" class="pg-tab"            data-lang="python" role="tab">Python</button>
-            <button type="button" class="pg-tab"            data-lang="mcp"    role="tab">Claude Code / MCP</button>
+            <button type="button" class="pg-tab"            data-lang="cli"    role="tab">Claude CLI</button>
+            <button type="button" class="pg-tab"            data-lang="mcp"    role="tab">AI prompt</button>
           </div>
           <div class="pg-panel is-active" data-lang="curl">
             <button type="button" class="pg-copy" data-target="pg-code-curl">Copy</button>
@@ -443,6 +444,10 @@ require __DIR__ . '/_header.php';
             <button type="button" class="pg-copy" data-target="pg-code-python">Copy</button>
             <pre id="pg-code-python"></pre>
           </div>
+          <div class="pg-panel" data-lang="cli">
+            <button type="button" class="pg-copy" data-target="pg-code-cli">Copy</button>
+            <pre id="pg-code-cli"></pre>
+          </div>
           <div class="pg-panel" data-lang="mcp">
             <button type="button" class="pg-copy" data-target="pg-code-mcp">Copy</button>
             <pre id="pg-code-mcp"></pre>
@@ -453,7 +458,7 @@ require __DIR__ . '/_header.php';
     </div>
 
     <h2 id="overview">Overview</h2>
-    <p>The SMS8 SMS gateway exposes a single host with one endpoint per capability. There are no path parameters and no nested resources — every action is a flat <code>POST</code> with form-encoded fields.</p>
+    <p>The SMS8 SMS gateway exposes a single host with one endpoint per capability. There are no path parameters and no nested resources. Every action is a flat <code>POST</code> with form-encoded fields.</p>
     <ul>
       <li><strong>Base URL</strong>: <code>https://app.sms8.io/services/</code></li>
       <li><strong>Method</strong>: <code>POST</code> on every endpoint</li>
@@ -462,15 +467,15 @@ require __DIR__ . '/_header.php';
       <li><strong>Auth</strong>: <code>key=YOUR_SMS8_API_KEY</code> in the body</li>
     </ul>
     <div class="callout">
-      <strong>Vibe coding shortcut.</strong> If you live in Claude Code, Cursor or Windsurf, skip the curl and add the MCP server at <code>mcp.sms8.io</code> — your AI assistant will call these same endpoints for you. See <a href="#mcp">AI tools</a>.
+      <strong>Vibe coding shortcut.</strong> If you live in Claude Code, Cursor or Windsurf, skip the curl and add the MCP server at <code>mcp.sms8.io</code> so your AI assistant calls these endpoints for you. See <a href="#mcp">AI tools</a>.
     </div>
 
     <h2 id="authentication">Authentication</h2>
-    <p>Every request sends the API key in the POST body. The key is per-account and authorises every endpoint. Grab it from the API page of your dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> and regenerate any time — old keys are invalidated immediately.</p>
+    <p>Every request sends the API key in the POST body. The key is per-account and authorises every endpoint. Grab it from the API page of your dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> and regenerate any time. Old keys are invalidated immediately.</p>
 <pre><span class="c"># every request</span>
 key=YOUR_SMS8_API_KEY</pre>
     <div class="callout">
-      <strong>Tip.</strong> The MCP server at <code>mcp.sms8.io</code> accepts the same key as a Bearer header (<code>Authorization: Bearer YOUR_SMS8_API_KEY</code>) — useful when the tool only supports header-based auth.
+      <strong>Tip.</strong> The MCP server at <code>mcp.sms8.io</code> accepts the same key as a Bearer header (<code>Authorization: Bearer YOUR_SMS8_API_KEY</code>). Useful when the tool only supports header-based auth.
     </div>
 
     <h2 id="first-call">Your first SMS</h2>
@@ -519,8 +524,8 @@ key=YOUR_SMS8_API_KEY</pre>
         <tr><td>402</td><td>Out of message credits</td></tr>
         <tr><td>403</td><td>Action not allowed for this account or plan</td></tr>
         <tr><td>404</td><td>Resource not found (e.g. unknown message ID)</td></tr>
-        <tr><td>429</td><td>Rate limit hit — slow down and retry</td></tr>
-        <tr><td>500</td><td>Server error — please retry</td></tr>
+        <tr><td>429</td><td>Rate limit hit, slow down and retry</td></tr>
+        <tr><td>500</td><td>Server error, please retry</td></tr>
       </tbody>
     </table>
 
@@ -540,7 +545,7 @@ key=YOUR_SMS8_API_KEY</pre>
         <tr><td>messages</td><td>JSON</td><td>Array of <code>{number, message, type, attachments}</code> for true batch mode</td></tr>
         <tr><td>listID</td><td>int</td><td>Send to every contact in this list</td></tr>
         <tr><td>devices</td><td>JSON|int</td><td>Single ID, JSON array, or SIM-qualified form <code>"2|0"</code></td></tr>
-        <tr><td>option</td><td>0|1|2</td><td>See <a href="#routing">routing</a> — specified / all devices / all SIMs</td></tr>
+        <tr><td>option</td><td>0|1|2</td><td>See <a href="#routing">routing</a>: specified, all devices, or all SIMs</td></tr>
         <tr><td>useRandomDevice</td><td>0|1</td><td>Pick one device at random from the selection</td></tr>
         <tr><td>prioritize</td><td>0|1</td><td>Jump the queue (OTPs, replies)</td></tr>
         <tr><td>type</td><td>sms|mms</td><td>Defaults to sms</td></tr>
@@ -572,7 +577,7 @@ key=YOUR_SMS8_API_KEY</pre>
       <tbody>
         <tr><td>key</td><td>string</td><td>API key, required</td></tr>
         <tr><td>id</td><td>int</td><td>Get one message by ID</td></tr>
-        <tr><td>groupId</td><td>string</td><td>Group ID returned at send time — useful for batches</td></tr>
+        <tr><td>groupId</td><td>string</td><td>Group ID returned at send time, useful for batches</td></tr>
         <tr><td>status</td><td>string</td><td><code>Received</code>, <code>Sent</code>, <code>Pending</code>, <code>Failed</code></td></tr>
         <tr><td>deviceID</td><td>int</td><td>Filter by device</td></tr>
         <tr><td>simSlot</td><td>int</td><td>0 for first SIM, 1 for second</td></tr>
@@ -637,7 +642,7 @@ curl https://app.sms8.io/services/read-messages.php \
 
     <h2 id="webhooks">Inbound webhooks</h2>
     <p>Set a webhook URL on the API page of your dashboard. SMS8 will <code>POST</code> every received SMS to that URL with an HMAC-SHA256 signature, so your receiver can verify the payload came from SMS8 and was not tampered with.</p>
-    <p>From AI tools, register the webhook via the MCP <code>create_webhook</code> tool — it validates the URL against an SSRF block-list before saving.</p>
+    <p>From AI tools, register the webhook via the MCP <code>create_webhook</code> tool. It validates the URL against an SSRF block-list before saving.</p>
 
     <h2 id="routing">Device &amp; SIM routing</h2>
     <p>Every send endpoint takes the same routing controls. Mix them to load-balance across phones and SIMs.</p>
@@ -649,10 +654,10 @@ curl https://app.sms8.io/services/read-messages.php \
         <tr><td>2</td><td>Use every enabled device and every SIM. Maximum throughput on dual-SIM phones.</td></tr>
       </tbody>
     </table>
-    <p>Set <code>useRandomDevice=1</code> to pick exactly one sender from the selection at random — useful for OTPs.</p>
+    <p>Set <code>useRandomDevice=1</code> to pick exactly one sender from the selection at random, useful for OTPs.</p>
 
     <h2 id="scheduling">Scheduling</h2>
-    <p>Pass <code>schedule</code> as a unix timestamp to defer a send. Schedule the same message to many numbers, or send a batch on a future date — both work.</p>
+    <p>Pass <code>schedule</code> as a unix timestamp to defer a send. Schedule the same message to many numbers, or send a batch on a future date. Both work.</p>
 
     <h2 id="balance">Credit balance</h2>
     <p>Call <code>/services/send.php</code> with only the <code>key</code> field. The response's <code>credits</code> field returns the remaining credits or <code>"Unlimited"</code>.</p>
@@ -687,7 +692,7 @@ curl https://app.sms8.io/services/read-messages.php \
     </table>
 
     <h2 id="sdk-php">PHP SDK</h2>
-    <p>The dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> renders a complete PHP class with your API key prefilled — <code>sendSingleMessage</code>, <code>sendMessages</code>, <code>sendMessageToContactsList</code>, <code>getMessageByID</code>, <code>getMessagesByStatus</code>, <code>resendMessageByID</code>, <code>addContact</code>, <code>unsubscribeContact</code>, <code>getBalance</code>, <code>sendUssdRequest</code>, <code>getDevices</code>.</p>
+    <p>The dashboard at <a href="https://app.sms8.io/api.php">app.sms8.io/api.php</a> renders a complete PHP class with your API key prefilled. It includes <code>sendSingleMessage</code>, <code>sendMessages</code>, <code>sendMessageToContactsList</code>, <code>getMessageByID</code>, <code>getMessagesByStatus</code>, <code>resendMessageByID</code>, <code>addContact</code>, <code>unsubscribeContact</code>, <code>getBalance</code>, <code>sendUssdRequest</code>, <code>getDevices</code>.</p>
 <pre>$msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"Hello from SMS8"</span>);
 
 $msg = sendSingleMessage(<span class="s">"+11234567890"</span>, <span class="s">"From device 1"</span>, <span class="n">1</span>);
@@ -835,29 +840,48 @@ curl https://app.sms8.io/services/manage-contacts.php \
              "    print(msg)";
     document.getElementById('pg-code-python').textContent = py;
 
-    // MCP prompt
-    var mcpExtras = '';
-    if (opt === '1') mcpExtras = ' Use all my paired devices.';
-    else if (opt === '2') mcpExtras = ' Spread across all SIMs of all paired devices.';
-    else if (dev) mcpExtras = ' Use device ' + dev + '.';
+    // MCP / AI-assistant prompt
+    var aiExtras = '';
+    if (opt === '1') aiExtras = ' Use all my paired devices.';
+    else if (opt === '2') aiExtras = ' Spread across all SIMs of all paired devices.';
+    else if (dev) aiExtras = ' Use device ' + dev + '.';
+    var prompt = 'Send an SMS to ' + number + ' saying "' + msg.replace(/"/g,'\\"') + '"' +
+                 ' via the sms8 MCP.' + aiExtras;
+    var maskedKey = maskKey(keyEl.value.trim());
+    var mcpConfigBlock =
+        "{\n" +
+        "  \"mcpServers\": {\n" +
+        "    \"sms8\": {\n" +
+        "      \"url\": \"https://mcp.sms8.io\",\n" +
+        "      \"transport\": \"http\",\n" +
+        "      \"headers\": {\n" +
+        "        \"Authorization\": \"Bearer " + maskedKey + "\"\n" +
+        "      }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}";
     var mcp = "// In Claude Code, Cursor or Windsurf with the SMS8 MCP added,\n" +
               "// paste this prompt:\n\n" +
-              "Send an SMS to " + number + " saying \"" + msg.replace(/"/g,'\\"') + "\"" +
-              " via the sms8 MCP." + mcpExtras + "\n\n" +
+              prompt + "\n\n" +
               "// MCP config (one-time):\n" +
-              "// ~/.config/claude/mcp-servers.json\n" +
-              "{\n" +
-              "  \"mcpServers\": {\n" +
-              "    \"sms8\": {\n" +
-              "      \"url\": \"https://mcp.sms8.io\",\n" +
-              "      \"transport\": \"http\",\n" +
-              "      \"headers\": {\n" +
-              "        \"Authorization\": \"Bearer " + maskKey(keyEl.value.trim()) + "\"\n" +
-              "      }\n" +
-              "    }\n" +
-              "  }\n" +
-              "}";
+              "// ~/.config/claude/mcp-servers.json (Claude Code)\n" +
+              "// ~/.cursor/mcp.json (Cursor)\n" +
+              "// ~/.codeium/windsurf/mcp_config.json (Windsurf)\n" +
+              mcpConfigBlock;
     document.getElementById('pg-code-mcp').textContent = mcp;
+
+    // Claude CLI: one-liner that registers the MCP just for this run
+    // and prints the assistant's reply. Uses the real claude CLI flags.
+    var cliConfig = '{"mcpServers":{"sms8":{"url":"https://mcp.sms8.io","transport":"http","headers":{"Authorization":"Bearer ' + maskedKey + '"}}}}';
+    var cli = "# Already set up the SMS8 MCP? Just describe the job:\n" +
+              "claude -p " + JSON.stringify(prompt) + "\n\n" +
+              "# Not set up yet? Pass the MCP config inline for one run:\n" +
+              "claude -p " + JSON.stringify(prompt) + " \\\n" +
+              "  --mcp-config " + JSON.stringify(cliConfig) + " \\\n" +
+              "  --allowedTools \"mcp__sms8__send_sms\"\n\n" +
+              "# Or start an interactive session:\n" +
+              "claude --mcp-config " + JSON.stringify(cliConfig);
+    document.getElementById('pg-code-cli').textContent = cli;
   }
 
   // Tab switching

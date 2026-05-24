@@ -10,7 +10,7 @@
  */
 $page      = $page      ?? 'home';
 $title     = $title     ?? 'SMS8 MCP Server';
-$desc      = $desc      ?? 'SMS gateway MCP for Claude Code, Cursor and Windsurf — SMS, OTP and webhooks from your paired Android phone.';
+$desc      = $desc      ?? 'SMS gateway MCP for Claude Code, Cursor and Windsurf. SMS, OTP and webhooks from your paired Android phone.';
 $canonical = $canonical ?? 'https://mcp.sms8.io/' . ($page === 'home' ? '' : $page);
 $jsonld    = $jsonld    ?? '';
 ?>
@@ -53,8 +53,8 @@ $jsonld    = $jsonld    ?? '';
 
 <header class="site-header" id="site-header">
   <div class="header-inner">
-    <a href="/" class="site-logo" aria-label="SMS8 MCP — Home">
-      <img src="https://sms8.io/wp-content/uploads/2023/09/sms8.io-logo-white-1024x245.x51548.png" alt="SMS8 — Android SMS Gateway" width="120" height="29" loading="eager" decoding="async">
+    <a href="/" class="site-logo" aria-label="SMS8 MCP Home">
+      <img src="https://sms8.io/wp-content/uploads/2023/09/sms8.io-logo-white-1024x245.x51548.png" alt="SMS8 Android SMS Gateway" width="120" height="29" loading="eager" decoding="async">
       <span class="brand-suffix">MCP</span>
     </a>
     <nav class="site-nav" aria-label="Main navigation">
