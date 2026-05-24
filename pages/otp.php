@@ -33,6 +33,57 @@ require __DIR__ . '/_header.php';
   </div>
 </section>
 
+<section class="cs-strip-mcp">
+  <div class="container">
+    <div class="cs-row reveal">
+      <span class="cs-eyebrow">Every OTP, fully customizable</span>
+      <div class="cs-chips">
+        <span class="cs-chip"><strong>length</strong> 4 to 8</span>
+        <span class="cs-chip"><strong>expiry</strong> 60s to 15m</span>
+        <span class="cs-chip"><strong>attempts</strong> 1 to 10</span>
+        <span class="cs-chip"><strong>cooldown</strong> 30s to 10m</span>
+        <span class="cs-chip"><strong>template</strong> per request</span>
+        <span class="cs-chip"><strong>device / SIM routing</strong></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.cs-strip-mcp {
+  padding: 18px 0 24px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, rgba(168,85,247,0.04), rgba(99,102,241,0.02));
+}
+.cs-strip-mcp .cs-row {
+  display: flex; align-items: center; gap: 22px;
+  flex-wrap: wrap; justify-content: center;
+}
+.cs-strip-mcp .cs-eyebrow {
+  font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: #c4b5fd; white-space: nowrap;
+}
+.cs-strip-mcp .cs-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.cs-strip-mcp .cs-chip {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(168,85,247,0.22);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #e8e8f0;
+  display: inline-flex; gap: 6px;
+  transition: border-color .2s ease, transform .2s ease;
+}
+.cs-strip-mcp .cs-chip:hover { transform: translateY(-1px); border-color: rgba(168,85,247,0.5); }
+.cs-strip-mcp .cs-chip strong { color: #c4b5fd; font-weight: 700; }
+@media (max-width: 740px) {
+  .cs-strip-mcp .cs-row { gap: 14px; }
+  .cs-strip-mcp .cs-chip { font-size: 12.5px; padding: 5px 10px; }
+}
+</style>
+
 <section class="section" id="how">
   <div class="container">
     <div class="section-head reveal">
