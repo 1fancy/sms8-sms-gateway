@@ -47,6 +47,23 @@ $jsonld    = $jsonld    ?? '';
 
 <link rel="stylesheet" href="/css/site.css?v=<?= @filemtime(__DIR__ . '/../css/site.css') ?: time() ?>">
 
+<link rel="dns-prefetch" href="https://www.googletagmanager.com">
+<link rel="dns-prefetch" href="https://www.google-analytics.com">
+
+<!-- Google Analytics (GT-MQBK5RC) — deferred until after window load so it never blocks LCP -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'GT-MQBK5RC');
+window.addEventListener('load', function () {
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=GT-MQBK5RC';
+  document.head.appendChild(s);
+});
+</script>
+
 <?= $jsonld ?>
 </head>
 <body class="mcp-<?= htmlspecialchars($page) ?>">
