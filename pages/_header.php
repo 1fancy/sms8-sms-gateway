@@ -62,6 +62,7 @@ $jsonld    = $jsonld    ?? '';
       <a href="/#install">Install</a>
       <a href="/sms-api-documentation" class="<?= $page === 'api'  ? 'active' : '' ?>">API</a>
       <a href="/sms-otp-verification-api" class="<?= $page === 'otp'  ? 'active' : '' ?>">OTP</a>
+      <a href="/opencode-sms-mcp-server" class="<?= $page === 'opencode' ? 'active' : '' ?>">OpenCode</a>
       <a href="/#faq">FAQ</a>
       <a href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">GitHub</a>
     </nav>
@@ -80,6 +81,7 @@ $jsonld    = $jsonld    ?? '';
   <a href="/#install">Install</a>
   <a href="/sms-api-documentation">API</a>
   <a href="/sms-otp-verification-api">OTP</a>
+  <a href="/opencode-sms-mcp-server">OpenCode</a>
   <a href="/#faq">FAQ</a>
   <a href="https://github.com/1fancy/sms8-sms-gateway" target="_blank" rel="noopener">GitHub</a>
   <div class="mobile-nav-actions">

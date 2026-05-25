@@ -1,20 +1,23 @@
 # SMS8 MCP Server
 
-Send SMS, issue and verify OTPs, and configure webhooks from Claude Code, Cursor, Windsurf, and any other AI coding tool that speaks the Model Context Protocol. SMS routes through a paired Android phone via the SMS8 platform.
+[**SMS gateway** &rarr; sms8.io](https://sms8.io) &nbsp;·&nbsp; [**SMS Gateway MCP for vibe coders &amp; developers** &rarr; mcp.sms8.io](https://mcp.sms8.io)
+
+Send SMS, issue and verify OTPs, wait for incoming codes, and configure webhooks from Claude Code, Cursor, Windsurf, OpenCode and any other AI coding tool that speaks the Model Context Protocol. SMS routes through a paired Android phone via the SMS8 platform.
 
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-2024--11--05-7c3aed)](https://modelcontextprotocol.io)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-cc6600)](https://claude.com/claude-code)
 [![Cursor](https://img.shields.io/badge/Cursor-Compatible-000)](https://cursor.com)
+[![OpenCode](https://img.shields.io/badge/OpenCode-Compatible-10b981)](https://opencode.ai)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![PHP](https://img.shields.io/badge/built%20with-PHP%208-777BB4)](https://php.net)
 
-**Live server:** `https://mcp.sms8.io`
-**Dashboard:** `https://app.sms8.io`
-**Marketing:** `https://sms8.io`
+**Live server:** [https://mcp.sms8.io](https://mcp.sms8.io)
+**Dashboard:** [https://app.sms8.io](https://app.sms8.io)
+**Marketing site:** [https://sms8.io](https://sms8.io)
 
 ## Why use this
 
-Building an app and want SMS notifications, OTPs, or two-way messaging? Most options force you to register with carrier programs, provision phone numbers, and pay per message. SMS8 routes SMS through a phone you already own. The MCP server gives your AI assistant seven tools it can call directly, so adding SMS to a project takes one prompt instead of an hour of integration work.
+Building an app and want SMS notifications, OTPs, two-way messaging, or autonomous-agent phone verification? Most options force you to register with carrier programs, provision phone numbers, pay per message, or rent a disposable SIM per session. SMS8 routes SMS through a phone you already own. The MCP server gives your AI assistant nine tools it can call directly, so adding SMS to a project takes one prompt instead of an hour of integration work.
 
 ## What you get
 
@@ -24,12 +27,13 @@ Building an app and want SMS notifications, OTPs, or two-way messaging? Most opt
 | `send_sms` | Sends one SMS through a paired Android device |
 | `send_otp` | Generates and sends a verification code |
 | `verify_otp` | Compares a typed code against the latest issued OTP |
+| `wait_for_otp` | **NEW.** Blocks until an OTP arrives on the paired Android; extracts the code |
 | `get_messages` | Returns recent inbox or sent SMS |
 | `list_devices` | Lists paired Android devices |
+| `get_balance` | **NEW.** Lightweight credit and renewal check |
 | `create_webhook` | Registers a callback URL for inbound SMS and delivery events |
 
 All tools share the same send pipeline as the SMS8 dashboard. Credits, retries, multi-device routing, and webhook signing work identically to a direct API call.
-
 ## SMS8 vs Twilio vs MessageBird
 
 | Capability | SMS8 | Twilio | MessageBird |

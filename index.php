@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $redirects = [
         'api' => '/sms-api-documentation',
         'otp' => '/sms-otp-verification-api',
+        'opencode' => '/opencode-sms-mcp-server',
     ];
     if (isset($redirects[$path])) {
         header('Location: ' . $redirects[$path], true, 301);
@@ -82,9 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $routes = [
-        ''                          => 'pages/home.php',
-        'sms-api-documentation'     => 'pages/api.php',
-        'sms-otp-verification-api'  => 'pages/otp.php',
+        ''                            => 'pages/home.php',
+        'sms-api-documentation'       => 'pages/api.php',
+        'sms-otp-verification-api'    => 'pages/otp.php',
+        'opencode-sms-mcp-server'     => 'pages/opencode.php',
     ];
     if (isset($routes[$path])) {
         header('Content-Type: text/html; charset=utf-8');
