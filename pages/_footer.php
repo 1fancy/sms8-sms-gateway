@@ -67,6 +67,31 @@
     if (e.key === 'Escape' && nav.classList.contains('open')) setOpen(false);
   });
 })();
+
+// Copy-to-clipboard for .code-card blocks. Markup contract:
+//   <div class="code-card"><div class="code-card-head">…<button class="code-card-copy">…</button></div><pre>…</pre></div>
+(function () {
+  var btns = document.querySelectorAll('.code-card-copy');
+  if (!btns.length || !navigator.clipboard) return;
+  btns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var card = btn.closest('.code-card');
+      var pre = card && card.querySelector('pre');
+      if (!pre) return;
+      var text = pre.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        var label = btn.querySelector('.label');
+        var prev = label ? label.textContent : '';
+        if (label) label.textContent = 'Copied';
+        btn.classList.add('is-ok');
+        setTimeout(function () {
+          btn.classList.remove('is-ok');
+          if (label) label.textContent = prev || 'Copy';
+        }, 1400);
+      });
+    });
+  });
+})();
 </script>
 
 </body>

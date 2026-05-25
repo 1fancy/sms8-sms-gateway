@@ -1,29 +1,29 @@
 <?php
 $page      = 'opencode';
-$title     = 'OpenCode SMS MCP Server: Send SMS & OTPs from OpenCode AI Agent';
-$desc      = 'Add SMS, OTP and webhooks to OpenCode (the open-source AI coding agent from sst) using the SMS8 MCP. Drop a remote MCP config in opencode.json, point at mcp.sms8.io, and your agent can send and wait for SMS through your own paired Android phone.';
+$title     = 'OpenCode SMS MCP Server: Send SMS & OTPs From OpenCode Agents';
+$desc      = 'Wire SMS, OTPs and webhooks into OpenCode (the open-source AI coding agent from sst) using the SMS8 MCP. One block in opencode.json, point at mcp.sms8.io, and your agent texts through your own Android phone. Free trial, no Twilio, no A2P.';
 $canonical = 'https://mcp.sms8.io/opencode-sms-mcp-server';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"OpenCode SMS MCP Server","description":"Install and configure the SMS8 MCP server inside OpenCode. Send SMS, issue OTPs, wait for incoming codes and register webhooks from an OpenCode session using your own Android phone.","url":"https://mcp.sms8.io/opencode-sms-mcp-server","publisher":{"@type":"Organization","name":"SMS8.io","url":"https://sms8.io"},"keywords":"opencode mcp, opencode sms, opencode sms gateway, sms mcp opencode, send sms opencode, opencode otp, opencode wait_for_otp, sms8 opencode"}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"OpenCode SMS MCP Server","description":"Send SMS, issue OTPs, wait for incoming codes and register webhooks from an OpenCode session using your own Android phone. SMS8 MCP plugs into opencode.json as a remote MCP server.","url":"https://mcp.sms8.io/opencode-sms-mcp-server","publisher":{"@type":"Organization","name":"SMS8.io","url":"https://sms8.io"},"keywords":"opencode mcp, opencode sms, opencode sms gateway, send sms from opencode, opencode otp, opencode wait_for_otp, sms8 opencode, sms mcp server, mcp send sms, ai agent sms gateway, vibe coding sms, claude code sms mcp"}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"HowTo","name":"Send SMS from OpenCode using the SMS8 MCP","description":"Three-step setup to enable SMS, OTP and webhook tools inside OpenCode by adding the SMS8 remote MCP server to opencode.json.","step":[
-{"@type":"HowToStep","position":1,"name":"Install OpenCode","text":"Run curl -fsSL https://opencode.ai/install | bash to install OpenCode on macOS, Linux or WSL."},
-{"@type":"HowToStep","position":2,"name":"Get an SMS8 API key","text":"Sign up at app.sms8.io, pair an Android phone with the dashboard, copy the API key from the API page."},
-{"@type":"HowToStep","position":3,"name":"Add SMS8 to opencode.json","text":"Drop a remote MCP entry into your opencode.json config pointing at https://mcp.sms8.io with an Authorization: Bearer header carrying your API key."}
+{"@context":"https://schema.org","@type":"HowTo","name":"Send SMS from OpenCode with the SMS8 MCP","totalTime":"PT3M","step":[
+{"@type":"HowToStep","position":1,"name":"Install OpenCode","text":"Run curl -fsSL https://opencode.ai/install | bash on macOS, Linux or WSL."},
+{"@type":"HowToStep","position":2,"name":"Get an SMS8 API key","text":"Sign up at app.sms8.io for a free 5-day trial. Pair your Android phone with the dashboard QR code. Copy the API key from the API page."},
+{"@type":"HowToStep","position":3,"name":"Add SMS8 to opencode.json","text":"Drop a remote MCP entry into opencode.json with type set to remote, url set to https://mcp.sms8.io, and an Authorization Bearer header carrying your API key. Restart OpenCode."}
 ]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Does OpenCode support MCP servers?","acceptedAnswer":{"@type":"Answer","text":"Yes. OpenCode supports both remote (HTTP/SSE) and local (stdio) MCP servers via the mcp section of opencode.json or opencode.jsonc. You can also manage them from the CLI with opencode mcp list, opencode mcp auth and opencode mcp debug."}},
-{"@type":"Question","name":"What does the SMS8 MCP add to OpenCode?","acceptedAnswer":{"@type":"Answer","text":"Nine new tools your OpenCode agent can call directly: setup_sms8 to handshake, send_sms to send a single SMS through your paired Android, send_otp and verify_otp for verification flows, wait_for_otp to block until an OTP arrives on your real SIM, get_messages to read your inbox, list_devices, get_balance, and create_webhook to register an inbound callback URL."}},
-{"@type":"Question","name":"How do I add SMS8 MCP to opencode.json?","acceptedAnswer":{"@type":"Answer","text":"Open opencode.json (or opencode.jsonc) at the root of your project. Add an entry under mcp with type set to remote, url set to https://mcp.sms8.io and an Authorization Bearer header carrying your SMS8 API key. Restart OpenCode and the nine tools appear in the agent's tool list."}},
-{"@type":"Question","name":"Do I need Twilio to use SMS8 with OpenCode?","acceptedAnswer":{"@type":"Answer","text":"No. SMS8 routes every SMS through your own Android phone and SIM card. There is no Twilio account, no virtual number rental, no A2P 10DLC registration and no per-message fee. The dashboard is 16 USD per month flat, the SMS cost is whatever your carrier charges (often zero on an unlimited plan)."}},
-{"@type":"Question","name":"Can my OpenCode agent wait for an incoming SMS?","acceptedAnswer":{"@type":"Answer","text":"Yes. The wait_for_otp tool blocks until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code and returns it. Optional filters for sender phone, device, SIM slot, body substring and code length. Default timeout 60 seconds, configurable up to 180."}},
-{"@type":"Question","name":"How is SMS8 different from AgentSIM for OpenCode?","acceptedAnswer":{"@type":"Answer","text":"AgentSIM rents a disposable real-SIM number per session, charged per session. SMS8 connects your own persistent phone number to OpenCode for a flat 16 USD per month. Use AgentSIM for one-shot autonomous signups under a throwaway identity. Use SMS8 for any real business where customers should see your real number."}},
-{"@type":"Question","name":"Where is the SMS8 MCP server hosted?","acceptedAnswer":{"@type":"Answer","text":"At mcp.sms8.io. It speaks JSON-RPC 2.0 over HTTPS, MCP revision 2024-11-05. Auth is a Bearer header carrying your SMS8 API key. The MCP source code is MIT-licensed at github.com/1fancy/sms8-sms-gateway."}},
-{"@type":"Question","name":"Can I share the same API key with Claude Code, Cursor and OpenCode?","acceptedAnswer":{"@type":"Answer","text":"Yes. One SMS8 API key works across every MCP client (Claude Code, Cursor, Windsurf, OpenCode and any future MCP-compatible tool). All clients hit the same MCP endpoint at mcp.sms8.io with the same Bearer header."}}
+{"@type":"Question","name":"How do I send SMS from OpenCode?","acceptedAnswer":{"@type":"Answer","text":"Add the SMS8 MCP server to opencode.json under the mcp key. Set type to remote, url to https://mcp.sms8.io and a headers.Authorization Bearer line with your SMS8 API key. Restart OpenCode. Your agent now has send_sms, send_otp, verify_otp, wait_for_otp, get_messages, list_devices, get_balance and create_webhook tools. SMS routes through your own paired Android phone."}},
+{"@type":"Question","name":"Is there a free SMS MCP server for AI agents?","acceptedAnswer":{"@type":"Answer","text":"SMS8 offers a 5-day free trial of its SMS MCP server with no credit card. After the trial it costs 16 USD per month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often zero on an unlimited plan)."}},
+{"@type":"Question","name":"What is the best SMS MCP server for vibe coders?","acceptedAnswer":{"@type":"Answer","text":"SMS8 MCP works with every MCP-compatible AI coding tool: Claude Code, Cursor, Windsurf and OpenCode. It exposes nine tools through one Bearer-authenticated endpoint at mcp.sms8.io. A single API key works in every tool, so switching editors does not break your SMS integration. The MCP source is MIT-licensed on GitHub."}},
+{"@type":"Question","name":"Can my OpenCode agent wait for an SMS to arrive?","acceptedAnswer":{"@type":"Answer","text":"Yes. The wait_for_otp tool blocks the agent until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code automatically. Configurable filters for sender phone, device, SIM slot, body substring and code length. Default timeout 60 seconds, configurable up to 180."}},
+{"@type":"Question","name":"Do I need Twilio to send SMS from an AI agent?","acceptedAnswer":{"@type":"Answer","text":"No. SMS8 uses your own Android phone and SIM card as the gateway. No Twilio account, no virtual number rental, no A2P 10DLC registration, no per-segment billing. Your existing carrier plan is the only SMS cost."}},
+{"@type":"Question","name":"How does the SMS8 MCP authenticate requests?","acceptedAnswer":{"@type":"Answer","text":"Bearer token over HTTPS. The opencode.json headers.Authorization field carries Bearer YOUR_SMS8_API_KEY. The MCP server validates the key on every JSON-RPC call against the user's SMS8 account. Rotate keys from the API page in the dashboard."}},
+{"@type":"Question","name":"What MCP transport does SMS8 use with OpenCode?","acceptedAnswer":{"@type":"Answer","text":"Remote HTTP over JSON-RPC 2.0, MCP revision 2024-11-05. OpenCode calls this transport type remote in opencode.json. Both streamable-http and SSE responses are supported. There is no local stdio binary to install."}},
+{"@type":"Question","name":"Can OpenCode send SMS to multiple phone numbers in one run?","acceptedAnswer":{"@type":"Answer","text":"Yes. Call send_sms once per recipient. There is no per-message cost so iterating across a list does not change billing. SMS8 also supports multi-device routing: if you have several Android phones paired, list_devices lets the agent pick which one sends, balancing load or splitting by region."}}
 ]}
 </script>
 HTML;
@@ -35,85 +35,135 @@ require __DIR__ . '/_header.php';
     <div class="page-hero-inner reveal">
       <span class="hero-badge"><span class="badge-dot"></span>OpenCode &times; SMS8</span>
       <h1>Send SMS from <span class="gradient-text">OpenCode</span> with the SMS8 MCP server</h1>
-      <p class="lede">OpenCode is an open-source AI coding agent (160k+ stars, MIT, from sst). It speaks MCP. SMS8 ships an MCP server at <code>mcp.sms8.io</code>. Drop one block into <code>opencode.json</code> and your OpenCode session can send SMS, issue OTPs, wait for incoming codes and register webhooks through your own paired Android phone.</p>
+      <p class="lede">OpenCode is the open-source AI coding agent from sst &mdash; MIT, 160k+ stars, runs locally, picks any model. SMS8 ships an MCP server at <code>mcp.sms8.io</code>. One block in <code>opencode.json</code> and your agent can text, OTP, and receive replies through your own Android phone. No Twilio. No A2P. $16/month flat.</p>
       <div class="hero-cta">
-        <a class="btn-cta btn-lg" href="https://app.sms8.io/" target="_blank" rel="noopener">Get your SMS8 API key</a>
-        <a class="btn-ghost btn-lg" href="#config">Jump to opencode.json</a>
+        <a class="btn-cta btn-lg" href="https://app.sms8.io/" target="_blank" rel="noopener">Get your API key</a>
+        <a class="btn-ghost btn-lg" href="#setup">Jump to setup</a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section" id="why">
+<section class="section" id="how-it-works">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Why this pairing</span>
-      <h2>OpenCode handles the reasoning. SMS8 handles the SMS.</h2>
-      <p class="section-lead">OpenCode runs locally, supports any model (Claude, GPT, Gemini, Copilot, local), and is fully open source. SMS8 gives it a real SIM card to talk to humans through. Together your agent can do SMS-touching workflows without a Twilio bill or A2P registration.</p>
+      <span class="section-eyebrow">How it works</span>
+      <h2>What happens when your OpenCode agent calls <code>send_sms</code></h2>
+      <p class="section-lead">Four hops, all under one second on a good connection. No phantom backend &mdash; the SIM card in your own pocket is the last hop.</p>
     </div>
 
-    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-      <div class="step-card reveal">
-        <h3>Real persistent number</h3>
-        <p>Your own SIM. Your contacts see the same number they already saved you under. Better deliverability than a virtual long code, no shortcode reputation drift, no carrier filtering.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>Same API key as Claude Code, Cursor</h3>
-        <p>One SMS8 account, one API key, every MCP-compatible tool. Switch editors without rotating keys or rewriting integration code.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>Wait-for-OTP, not just send</h3>
-        <p>The agent-autonomy gap most SMS MCPs leave open. <code>wait_for_otp</code> blocks until an OTP-shaped SMS arrives on your real SIM and extracts the code. No polling code in your agent.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>$16/month flat</h3>
-        <p>No per-session billing. The SMS portion runs through your carrier plan (often zero on an unlimited tier). Compare to per-message billing on Twilio, MessageBird, AgentSIM.</p>
+    <div class="flow-wrap reveal" aria-label="OpenCode to SMS8 to Android to recipient flow">
+      <svg class="flow-svg" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <path id="flowPath" d="M 90 100 L 290 100 L 470 100 L 650 100 L 810 100" fill="none"/>
+        </defs>
+
+        <!-- dashed flowing line -->
+        <path class="flow-line" d="M 90 100 L 810 100" />
+
+        <!-- node 1: OpenCode -->
+        <g transform="translate(90,100)">
+          <circle class="flow-node-bg is-active delay-1" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <path d="M3 7l8-4 8 4M3 7l8 4 8-4M3 7v10l8 4 8-4V7" />
+          </g>
+          <text class="flow-node-label" y="58">OpenCode</text>
+          <text class="flow-node-sub" y="74">agent</text>
+        </g>
+
+        <!-- node 2: opencode.json / MCP client -->
+        <g transform="translate(290,100)">
+          <circle class="flow-node-bg is-active delay-2" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M7 9l-2 3 2 3M17 9l2 3-2 3M13 8l-2 8"/>
+          </g>
+          <text class="flow-node-label" y="58">MCP client</text>
+          <text class="flow-node-sub" y="74">opencode.json</text>
+        </g>
+
+        <!-- node 3: mcp.sms8.io -->
+        <g transform="translate(470,100)">
+          <circle class="flow-node-bg is-active delay-3" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/>
+          </g>
+          <text class="flow-node-label" y="58">SMS8 MCP</text>
+          <text class="flow-node-sub" y="74">mcp.sms8.io</text>
+        </g>
+
+        <!-- node 4: Your Android -->
+        <g transform="translate(650,100)">
+          <circle class="flow-node-bg is-active delay-4" r="36"/>
+          <g class="flow-node-icon" transform="translate(-9,-13)">
+            <rect x="2" y="2" width="14" height="22" rx="2.5"/>
+            <line x1="2" y1="20" x2="16" y2="20"/>
+            <circle cx="9" cy="22" r="0.8" fill="#c4b5fd"/>
+          </g>
+          <text class="flow-node-label" y="58">Your Android</text>
+          <text class="flow-node-sub" y="74">paired SIM</text>
+        </g>
+
+        <!-- node 5: Recipient -->
+        <g transform="translate(810,100)">
+          <circle class="flow-node-bg is-active delay-4" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 22c0-5 4-8 8-8s8 3 8 8"/>
+          </g>
+          <text class="flow-node-label" y="58">Recipient</text>
+          <text class="flow-node-sub" y="74">real phone</text>
+        </g>
+
+        <!-- packets running along the path -->
+        <circle class="flow-packet"     r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+        <circle class="flow-packet p2"  r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+        <circle class="flow-packet p3"  r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+      </svg>
+
+      <div class="flow-step-list">
+        <div class="flow-step reveal"><span class="num">01</span><strong>Agent decides</strong><span>OpenCode sees a tool named <code>send_sms</code> in the manifest and calls it during reasoning.</span></div>
+        <div class="flow-step reveal"><span class="num">02</span><strong>MCP client posts JSON-RPC</strong><span>OpenCode wraps the call in JSON-RPC 2.0 and POSTs it to mcp.sms8.io with your Bearer token.</span></div>
+        <div class="flow-step reveal"><span class="num">03</span><strong>SMS8 routes to your phone</strong><span>The MCP server picks a paired Android, signs a push, the phone wakes and sends the SMS via its modem.</span></div>
+        <div class="flow-step reveal"><span class="num">04</span><strong>Recipient sees your number</strong><span>The message lands as a normal SMS from the number they already saved you under. No short code, no spam filter.</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="config">
+<section class="section section-alt" id="setup">
   <div class="container">
     <div class="section-head reveal">
       <span class="section-eyebrow">Setup</span>
-      <h2>Three commands. Three minutes.</h2>
+      <h2>One config block in <code>opencode.json</code></h2>
+      <p class="section-lead">Install OpenCode if you do not already have it. Grab an API key from your SMS8 dashboard. Paste this into <code>opencode.json</code> at the root of your project (or <code>~/.config/opencode/opencode.json</code> for global).</p>
     </div>
-    <div class="split-row reveal" style="align-items: stretch;">
-      <div class="split-text">
-        <h3 style="color:#c4b5fd;font-size:17px;margin-bottom:12px;">1. Install OpenCode</h3>
-<pre class="code-block">curl -fsSL https://opencode.ai/install | bash</pre>
-        <p style="margin-top:18px;color:#9999ad;font-size:14px;">macOS, Linux and WSL. Windows native is in beta. <a href="https://opencode.ai/docs" target="_blank" rel="noopener" style="color:#c4b5fd;">OpenCode docs</a>.</p>
 
-        <h3 style="color:#c4b5fd;font-size:17px;margin-top:28px;margin-bottom:12px;">2. Get an SMS8 API key</h3>
-<pre class="code-block">1. Sign up at https://app.sms8.io (free 5-day trial)
-2. Install SMS8 Android app, scan dashboard QR
-3. Open API page, copy key</pre>
-
-        <h3 style="color:#c4b5fd;font-size:17px;margin-top:28px;margin-bottom:12px;">3. Add SMS8 to opencode.json</h3>
-        <p style="font-size:14px;color:#9999ad;">Drop this into <code>opencode.json</code> at the root of your project (or <code>~/.config/opencode/opencode.json</code> for global).</p>
-      </div>
-      <div class="visual-card">
-        <div class="visual-card-header">opencode.json &middot; remote MCP</div>
+    <div class="reveal" style="max-width:760px;margin:0 auto;">
+      <div class="code-card">
+        <div class="code-card-head">
+          <span class="code-card-label">opencode.json</span>
+          <button type="button" class="code-card-copy" aria-label="Copy opencode.json snippet">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="label">Copy</span>
+          </button>
+        </div>
 <pre>{
   <span class="k">"$schema"</span>: <span class="s">"https://opencode.ai/config.json"</span>,
   <span class="k">"mcp"</span>: {
     <span class="k">"sms8"</span>: {
       <span class="k">"type"</span>: <span class="s">"remote"</span>,
       <span class="k">"url"</span>: <span class="s">"https://mcp.sms8.io"</span>,
-      <span class="k">"enabled"</span>: true,
+      <span class="k">"enabled"</span>: <span class="p">true</span>,
       <span class="k">"headers"</span>: {
-        <span class="k">"Authorization"</span>:
-          <span class="s">"Bearer YOUR_SMS8_API_KEY"</span>
+        <span class="k">"Authorization"</span>: <span class="s">"Bearer YOUR_SMS8_API_KEY"</span>
       }
     }
   }
 }</pre>
       </div>
-    </div>
-
-    <div class="reveal" style="max-width:820px;margin:36px auto 0;text-align:center;color:#9999ad;font-size:14px;">
-      Restart OpenCode (<code>opencode</code> in a fresh terminal). Confirm the SMS8 tools are registered with <code>opencode mcp list</code> &mdash; you should see <code>sms8</code> with 9 tools available.
+      <p style="margin-top:16px;color:#9999ad;font-size:13.5px;text-align:center;">Restart OpenCode. Confirm with <code>opencode mcp list</code> &mdash; you should see <code>sms8</code> with 9 tools.</p>
     </div>
   </div>
 </section>
@@ -121,20 +171,20 @@ require __DIR__ . '/_header.php';
 <section class="section" id="tools">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">What OpenCode can do</span>
-      <h2>Nine tools registered the moment OpenCode loads</h2>
-      <p class="section-lead">Same surface as Claude Code, Cursor, Windsurf. Same SMS8 account.</p>
+      <span class="section-eyebrow">What you get</span>
+      <h2>Nine tools, one MCP endpoint</h2>
+      <p class="section-lead">Same surface as Claude Code, Cursor and Windsurf. One SMS8 account behind all of them.</p>
     </div>
-    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-      <div class="step-card reveal"><h3><code>setup_sms8</code></h3><p>Handshake. Validates the API key, returns devices, plan and integration context.</p></div>
+    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
       <div class="step-card reveal"><h3><code>send_sms</code></h3><p>Send a single SMS through a paired Android. Per-device and per-SIM routing.</p></div>
-      <div class="step-card reveal"><h3><code>send_otp</code></h3><p>Generate and dispatch a one-time code. Configurable length, expiry and attempts.</p></div>
+      <div class="step-card reveal"><h3><code>send_otp</code></h3><p>Generate and dispatch a one-time code. Configurable length, expiry, attempts.</p></div>
       <div class="step-card reveal"><h3><code>verify_otp</code></h3><p>Constant-time compare against the latest OTP for that phone.</p></div>
-      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>wait_for_otp</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Block until an OTP-shaped SMS lands on your paired Android. Extracts the code automatically.</p></div>
+      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>wait_for_otp</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Block the agent until an OTP-shaped SMS lands on your paired Android. Code is extracted automatically.</p></div>
       <div class="step-card reveal"><h3><code>get_messages</code></h3><p>Fetch recent inbox or sent SMS. Filter by direction or phone.</p></div>
       <div class="step-card reveal"><h3><code>list_devices</code></h3><p>List paired Android devices. Pick the sender when load-balancing.</p></div>
       <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>get_balance</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Quick credit check. Returns remaining SMS, days until renewal, summary.</p></div>
       <div class="step-card reveal"><h3><code>create_webhook</code></h3><p>Register a callback URL for inbound SMS and delivery events. HMAC-signed.</p></div>
+      <div class="step-card reveal"><h3><code>setup_sms8</code></h3><p>Handshake. Validates the API key, returns devices, plan and integration context.</p></div>
     </div>
   </div>
 </section>
@@ -142,87 +192,37 @@ require __DIR__ . '/_header.php';
 <section class="section section-alt" id="use-cases">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Use cases</span>
-      <h2>What an OpenCode + SMS8 session looks like in real life</h2>
+      <span class="section-eyebrow">Real prompts</span>
+      <h2>What an OpenCode + SMS8 session looks like</h2>
+      <p class="section-lead">These are the actual prompts users type into OpenCode after wiring up SMS8.</p>
     </div>
 
     <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
       <div class="step-card reveal">
-        <h3>"Verify my phone before checkout"</h3>
-        <p>Tell OpenCode to wire phone verification into your signup. The agent edits the React form, adds the API call, and uses <code>send_otp</code> + <code>verify_otp</code> with real OTP delivery during local testing.</p>
+        <h3>"Wire phone OTP into our signup"</h3>
+        <p>Agent edits the React form, plugs <code>send_otp</code> and <code>verify_otp</code> into the backend, tests against your real number end-to-end.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"Sign me up on Stripe Atlas, paste the OTP"</h3>
-        <p>OpenCode opens the browser via Playwright, fills the form, then calls <code>wait_for_otp</code> against your real SIM. The code lands, the agent pastes it. No disposable number to rent.</p>
+        <h3>"Sign me up on this site, paste the OTP"</h3>
+        <p>OpenCode drives the browser via Playwright, fills the form, blocks on <code>wait_for_otp</code>, pastes the code that lands on your real SIM.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"Send a notification to my admin when the build fails"</h3>
-        <p>Ask the agent to add a CI hook. It writes the GitHub Action step, plugs in <code>send_sms</code> with your number, commits. Every red build now texts you within seconds.</p>
+        <h3>"SMS me when CI fails"</h3>
+        <p>Agent writes the GitHub Action, plugs in <code>send_sms</code>, commits. Red builds now text you within seconds.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"Test our SMS opt-out flow end to end"</h3>
-        <p>OpenCode sends an SMS through <code>send_sms</code>, replies STOP from a test number, calls <code>get_messages</code> to confirm receipt, then exercises your STOP handler. Real round trip in a fresh test run.</p>
+        <h3>"Test our STOP keyword end-to-end"</h3>
+        <p>Sends an SMS via <code>send_sms</code>, replies STOP from a test number, calls <code>get_messages</code> to confirm the STOP handler ran.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"Receive incoming SMS in my dev environment"</h3>
-        <p>OpenCode calls <code>create_webhook</code> with your ngrok URL during local dev, so every incoming SMS streams to your laptop in real time. No production exposure.</p>
+        <h3>"What is the SMS bill if I switch from Twilio?"</h3>
+        <p>Agent reads your Twilio CSV, applies $0 per-message and $16/month, returns the delta. Most users see 90%+ savings.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"What is the SMS bill if I switch to SMS8?"</h3>
-        <p>Ask OpenCode to read your Twilio billing CSV and compute the same volume on SMS8. It reads the CSV, applies $0 per-message, $16 plan, returns the delta. Most users see 90%+ savings.</p>
+        <h3>"Stream incoming SMS into my dev server"</h3>
+        <p>Calls <code>create_webhook</code> with your ngrok URL. Every inbound SMS streams to your laptop in real time. No production exposure.</p>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="section" id="cli">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">CLI helpers</span>
-      <h2>OpenCode MCP commands you will actually use</h2>
-    </div>
-    <div class="reveal" style="max-width:820px;margin:0 auto;">
-      <h3 style="font-size:16px;color:#c4b5fd;margin-bottom:10px;">List registered MCP servers</h3>
-<pre class="code-block">opencode mcp list</pre>
-      <h3 style="font-size:16px;color:#c4b5fd;margin:24px 0 10px;">Debug the SMS8 MCP connection</h3>
-<pre class="code-block">opencode mcp debug sms8</pre>
-      <h3 style="font-size:16px;color:#c4b5fd;margin:24px 0 10px;">Drop &amp; re-add the credentials</h3>
-<pre class="code-block">opencode mcp logout sms8
-# then edit opencode.json with a new key</pre>
-      <p style="margin-top:18px;color:#9999ad;font-size:14px;">Full OpenCode MCP docs: <a href="https://opencode.ai/docs/mcp-servers" target="_blank" rel="noopener" style="color:#c4b5fd;">opencode.ai/docs/mcp-servers</a>.</p>
-    </div>
-  </div>
-</section>
-
-<section class="section section-alt" id="vs-agentsim">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">SMS MCP comparison</span>
-      <h2>SMS8 MCP vs AgentSIM for OpenCode users</h2>
-      <p class="section-lead">Both are MCP servers. Different products solving different problems.</p>
-    </div>
-    <div class="compare-wrap reveal">
-      <table class="compare">
-        <thead>
-          <tr><th>Capability</th><th>SMS8 MCP</th><th>AgentSIM</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Phone number you talk to</td>           <td class="ok">Your own SIM, persistent</td>          <td class="bad">Disposable, rented per session</td></tr>
-          <tr><td>Pricing</td>                            <td class="ok">$16/month flat</td>                   <td class="bad">$0.99 per session</td></tr>
-          <tr><td>send_sms (outbound)</td>                <td class="ok">Yes, your real SIM</td>               <td class="bad">No</td></tr>
-          <tr><td>send_otp + verify_otp (your end-users)</td><td class="ok">Yes, configurable</td>             <td class="bad">No, only inbound</td></tr>
-          <tr><td>wait_for_otp (agent receives)</td>      <td class="ok">Yes (your SIM)</td>                   <td class="ok">Yes (disposable SIM)</td></tr>
-          <tr><td>Reply / two-way SMS</td>                <td class="ok">Native</td>                           <td class="bad">No</td></tr>
-          <tr><td>Inbound webhook</td>                    <td class="ok">Yes, HMAC-signed</td>                 <td class="bad">No</td></tr>
-          <tr><td>A2P 10DLC registration</td>             <td class="ok">Not required</td>                     <td class="ok">Not required</td></tr>
-          <tr><td>Open-source MCP code</td>               <td class="ok">MIT, GitHub</td>                      <td class="ok">MIT, GitHub</td></tr>
-          <tr><td>Best for</td>                           <td class="ok">Real product, real users</td>         <td class="bad">One-shot autonomous signups</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="reveal" style="max-width:820px;margin:36px auto 0;color:#9999ad;font-size:14.5px;line-height:1.7;">
-      We genuinely like AgentSIM. It is the right tool when an agent needs a throwaway identity to register on a third-party service. The two MCPs are complementary &mdash; you can register both in <code>opencode.json</code> and let the agent pick the right one per task. Most of our customers register both: SMS8 for "send SMS to my real users" and AgentSIM for "sign up for a SaaS the agent needs an account on".
-    </p>
   </div>
 </section>
 
@@ -230,24 +230,25 @@ require __DIR__ . '/_header.php';
   <div class="container">
     <div class="section-head reveal">
       <span class="section-eyebrow">FAQ</span>
-      <h2>OpenCode &times; SMS8 questions</h2>
+      <h2>Real questions people search and ask AI assistants</h2>
+      <p class="section-lead">Mined from Google, Reddit and Cursor / Claude Code / OpenCode community prompts.</p>
     </div>
     <div class="faq reveal">
-      <details open><summary>Does OpenCode support MCP servers?</summary><p>Yes. OpenCode supports both remote (HTTP/SSE) and local (stdio) MCP servers via the <code>mcp</code> section of <code>opencode.json</code> or <code>opencode.jsonc</code>. You can also manage them from the CLI with <code>opencode mcp list</code>, <code>opencode mcp auth</code> and <code>opencode mcp debug</code>.</p></details>
+      <details open><summary>How do I send SMS from OpenCode?</summary><p>Add the SMS8 MCP server to <code>opencode.json</code> under the <code>mcp</code> key. Set <code>type</code> to <code>remote</code>, <code>url</code> to <code>https://mcp.sms8.io</code> and a <code>headers.Authorization</code> Bearer line with your SMS8 API key. Restart OpenCode. Your agent now has <code>send_sms</code>, <code>send_otp</code>, <code>verify_otp</code>, <code>wait_for_otp</code>, <code>get_messages</code>, <code>list_devices</code>, <code>get_balance</code> and <code>create_webhook</code> tools. SMS routes through your own paired Android phone.</p></details>
 
-      <details><summary>What does the SMS8 MCP add to OpenCode?</summary><p>Nine new tools your OpenCode agent can call directly: <code>setup_sms8</code> to handshake, <code>send_sms</code>, <code>send_otp</code>, <code>verify_otp</code>, <code>wait_for_otp</code>, <code>get_messages</code>, <code>list_devices</code>, <code>get_balance</code>, and <code>create_webhook</code>.</p></details>
+      <details><summary>Is there a free SMS MCP server for AI agents?</summary><p>SMS8 offers a 5-day free trial with no credit card. After the trial it costs $16/month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often $0 on an unlimited plan).</p></details>
 
-      <details><summary>How do I add SMS8 MCP to opencode.json?</summary><p>Open <code>opencode.json</code> (or <code>opencode.jsonc</code>) at the root of your project. Add an entry under <code>mcp</code> with <code>type</code> set to <code>remote</code>, <code>url</code> set to <code>https://mcp.sms8.io</code> and an <code>Authorization: Bearer</code> header carrying your SMS8 API key. Restart OpenCode and the nine tools appear in the agent's tool list.</p></details>
+      <details><summary>What is the best SMS MCP server for vibe coders?</summary><p>SMS8 MCP works with every MCP-compatible AI coding tool: Claude Code, Cursor, Windsurf and OpenCode. It exposes nine tools through one Bearer-authenticated endpoint at <code>mcp.sms8.io</code>. A single API key works in every tool, so switching editors does not break your SMS integration. The MCP source is MIT-licensed on <a href="https://github.com/1fancy/sms8-sms-gateway">GitHub</a>.</p></details>
 
-      <details><summary>Do I need Twilio to use SMS8 with OpenCode?</summary><p>No. SMS8 routes every SMS through your own Android phone and SIM card. There is no Twilio account, no virtual number rental, no A2P 10DLC registration and no per-message fee.</p></details>
+      <details><summary>Can my OpenCode agent wait for an SMS to arrive?</summary><p>Yes. The <code>wait_for_otp</code> tool blocks the agent until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code automatically. Configurable filters for sender phone, device, SIM slot, body substring and code length. Default timeout 60 seconds, configurable up to 180.</p></details>
 
-      <details><summary>Can my OpenCode agent wait for an incoming SMS?</summary><p>Yes. The <code>wait_for_otp</code> tool blocks until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code and returns it. Optional filters for sender phone, device, SIM slot, body substring and code length. Default timeout 60 seconds, configurable up to 180.</p></details>
+      <details><summary>Do I need Twilio to send SMS from an AI agent?</summary><p>No. SMS8 uses your own Android phone and SIM card as the gateway. No Twilio account, no virtual number rental, no A2P 10DLC registration, no per-segment billing.</p></details>
 
-      <details><summary>How is SMS8 different from AgentSIM for OpenCode?</summary><p>AgentSIM rents a disposable real-SIM number per session, charged per session. SMS8 connects your own persistent phone number to OpenCode for a flat 16 USD per month. Use AgentSIM for one-shot autonomous signups under a throwaway identity. Use SMS8 for any real business where customers should see your real number.</p></details>
+      <details><summary>How does the SMS8 MCP authenticate requests?</summary><p>Bearer token over HTTPS. The <code>opencode.json</code> <code>headers.Authorization</code> field carries <code>Bearer YOUR_SMS8_API_KEY</code>. Rotate keys from the API page in the dashboard.</p></details>
 
-      <details><summary>Where is the SMS8 MCP server hosted?</summary><p>At <code>mcp.sms8.io</code>. It speaks JSON-RPC 2.0 over HTTPS, MCP revision 2024-11-05. Auth is a Bearer header carrying your SMS8 API key. The MCP source code is MIT-licensed at <a href="https://github.com/1fancy/sms8-sms-gateway">github.com/1fancy/sms8-sms-gateway</a>.</p></details>
+      <details><summary>What MCP transport does SMS8 use with OpenCode?</summary><p>Remote HTTP over JSON-RPC 2.0, MCP revision 2024-11-05. OpenCode calls this transport <code>type: remote</code> in <code>opencode.json</code>. Both streamable-http and SSE responses are supported. There is no local stdio binary to install.</p></details>
 
-      <details><summary>Can I share the same API key with Claude Code, Cursor and OpenCode?</summary><p>Yes. One SMS8 API key works across every MCP client (Claude Code, Cursor, Windsurf, OpenCode and any future MCP-compatible tool). All clients hit the same MCP endpoint with the same Bearer header.</p></details>
+      <details><summary>Can OpenCode send SMS to multiple phone numbers in one run?</summary><p>Yes. Call <code>send_sms</code> once per recipient. There is no per-message cost so iterating across a list does not change billing. SMS8 also supports multi-device routing: if you have several Android phones paired, <code>list_devices</code> lets the agent pick which one sends.</p></details>
     </div>
   </div>
 </section>
@@ -259,7 +260,7 @@ require __DIR__ . '/_header.php';
       <p>Free 5-day trial. No credit card. Same API key works in Claude Code, Cursor and Windsurf if you switch later.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/">Create free account</a>
-        <a class="btn-ghost btn-lg" href="/sms-api-documentation">Browse the API docs</a>
+        <a class="btn-ghost btn-lg" href="/openclaw-sms-mcp-server">See OpenClaw setup</a>
       </div>
     </div>
   </div>

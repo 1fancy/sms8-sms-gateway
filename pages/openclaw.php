@@ -1,29 +1,29 @@
 <?php
 $page      = 'openclaw';
-$title     = 'OpenClaw SMS MCP Server: Add SMS & OTP to OpenClaw Personal AI';
-$desc      = 'Wire SMS, OTPs and webhooks into OpenClaw (Peter Steinberger\'s open-source personal AI agent) via the SMS8 MCP server. Drop one block into openclaw.json, point at mcp.sms8.io, and your local agent can send and wait for SMS through your own paired Android phone alongside its WhatsApp, Telegram and Discord skills.';
+$title     = 'OpenClaw SMS MCP Server: Send SMS From Your Personal AI Agent';
+$desc      = 'Give OpenClaw (Peter Steinberger\'s open-source personal AI) a real phone number. Add the SMS8 MCP block to openclaw.json, point at mcp.sms8.io, and your local agent texts and reads SMS through your own paired Android. Free trial, no Twilio.';
 $canonical = 'https://mcp.sms8.io/openclaw-sms-mcp-server';
 $jsonld = <<<'HTML'
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"OpenClaw SMS MCP Server","description":"Install and configure the SMS8 MCP server inside OpenClaw. Send SMS, issue OTPs, wait for incoming codes and register webhooks from an OpenClaw session using your own paired Android phone, alongside the WhatsApp, Telegram and Discord skills OpenClaw already ships.","url":"https://mcp.sms8.io/openclaw-sms-mcp-server","publisher":{"@type":"Organization","name":"SMS8.io","url":"https://sms8.io"},"keywords":"openclaw mcp, openclaw sms, openclaw sms gateway, sms mcp openclaw, send sms openclaw, openclaw otp, openclaw wait_for_otp, sms8 openclaw, openclaw whatsapp sms, openclaw bridge sms"}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"OpenClaw SMS MCP Server","description":"Send SMS, issue OTPs, wait for incoming codes and register webhooks from an OpenClaw session using your own paired Android phone. SMS8 MCP plugs into openclaw.json as a streamable-http remote MCP server.","url":"https://mcp.sms8.io/openclaw-sms-mcp-server","publisher":{"@type":"Organization","name":"SMS8.io","url":"https://sms8.io"},"keywords":"openclaw mcp, openclaw sms, openclaw sms gateway, send sms from openclaw, openclaw otp, sms mcp openclaw, personal ai sms, ai assistant sms whatsapp, sms8 openclaw, mcp android phone gateway"}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"HowTo","name":"Add an SMS MCP server to OpenClaw","description":"Three-step setup to enable SMS, OTP and webhook tools inside OpenClaw by adding the SMS8 remote MCP server to ~/.openclaw/openclaw.json.","step":[
-{"@type":"HowToStep","position":1,"name":"Install OpenClaw","text":"Run curl -fsSL https://openclaw.ai/install.sh | bash to install OpenClaw on Mac, Windows or Linux."},
-{"@type":"HowToStep","position":2,"name":"Get an SMS8 API key","text":"Sign up at app.sms8.io, pair an Android phone with the dashboard, copy the API key from the API page."},
-{"@type":"HowToStep","position":3,"name":"Add SMS8 to openclaw.json","text":"Drop a remote server entry under mcp.servers in ~/.openclaw/openclaw.json. Set transport to streamable-http, url to https://mcp.sms8.io, and a headers.Authorization Bearer line carrying your API key."}
+{"@context":"https://schema.org","@type":"HowTo","name":"Add an SMS MCP server to OpenClaw","totalTime":"PT3M","step":[
+{"@type":"HowToStep","position":1,"name":"Install OpenClaw","text":"Run curl -fsSL https://openclaw.ai/install.sh | bash or npm i -g openclaw on Mac, Windows or Linux."},
+{"@type":"HowToStep","position":2,"name":"Get an SMS8 API key","text":"Sign up at app.sms8.io. Pair an Android phone with the dashboard QR. Copy the API key from the API page."},
+{"@type":"HowToStep","position":3,"name":"Add SMS8 under mcp.servers","text":"Open ~/.openclaw/openclaw.json. Add an entry named sms8 with transport set to streamable-http, url set to https://mcp.sms8.io, and headers.Authorization carrying Bearer ${SMS8_API_KEY}. OpenClaw hot-reloads."}
 ]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Does OpenClaw support MCP servers?","acceptedAnswer":{"@type":"Answer","text":"Yes. OpenClaw is built around Model Context Protocol from day one. The mcp.servers section of ~/.openclaw/openclaw.json accepts both local stdio servers (command + args) and remote HTTP servers (url + transport + headers). Hot reload is enabled, so changes take effect without a restart."}},
-{"@type":"Question","name":"What does the SMS8 MCP add to OpenClaw?","acceptedAnswer":{"@type":"Answer","text":"Nine new tools your OpenClaw agent can call directly: setup_sms8 to handshake, send_sms to send a single SMS through your paired Android, send_otp and verify_otp for verification flows, wait_for_otp to block until an OTP arrives on your real SIM, get_messages to read your inbox, list_devices, get_balance, and create_webhook to register an inbound callback URL."}},
-{"@type":"Question","name":"How do I add SMS8 MCP to openclaw.json?","acceptedAnswer":{"@type":"Answer","text":"Open ~/.openclaw/openclaw.json. Inside the mcp section, under servers, add an entry named sms8 with url set to https://mcp.sms8.io, transport set to streamable-http and a headers block carrying Authorization: Bearer ${SMS8_API_KEY}. Save the file. OpenClaw picks the change up live."}},
-{"@type":"Question","name":"Why pair OpenClaw with SMS8 instead of using Beeper or iMessage?","acceptedAnswer":{"@type":"Answer","text":"OpenClaw already speaks to WhatsApp, Telegram, Discord and Signal through Beeper-style bridges. SMS is the one channel that none of those cover. SMS8 plugs that gap: your OpenClaw agent can now SMS a real phone number (yours or anyone else's), receive SMS replies, and use OTPs in verification flows."}},
-{"@type":"Question","name":"Can OpenClaw wait for an incoming SMS?","acceptedAnswer":{"@type":"Answer","text":"Yes. The wait_for_otp tool blocks until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code. Useful when OpenClaw is doing autonomous tasks that need a code from your real number (bank apps, government portals, two-factor logins, anything that won\\u2019t accept a virtual number)."}},
-{"@type":"Question","name":"Is OpenClaw open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. OpenClaw lives at github.com/openclaw/openclaw, written in TypeScript by Peter Steinberger (creator of PSPDFKit). It runs locally on your machine with persistent memory, supports any LLM provider (Claude, GPT, Gemini, local), and now ships an MCP registry so SMS8 plugs in with one JSON block."}},
-{"@type":"Question","name":"Where is the SMS8 MCP server hosted?","acceptedAnswer":{"@type":"Answer","text":"At mcp.sms8.io. It speaks JSON-RPC 2.0 over HTTPS, MCP revision 2024-11-05, both streamable-http and SSE transports. Auth is a Bearer header carrying your SMS8 API key. The MCP source code is MIT-licensed at github.com/1fancy/sms8-sms-gateway."}},
-{"@type":"Question","name":"Can I share the same API key with Claude Code, OpenCode and OpenClaw?","acceptedAnswer":{"@type":"Answer","text":"Yes. One SMS8 API key works across every MCP client (Claude Code, Cursor, Windsurf, OpenCode, OpenClaw and any future MCP-compatible agent). All clients hit the same MCP endpoint with the same Bearer header."}}
+{"@type":"Question","name":"How do I send SMS from OpenClaw?","acceptedAnswer":{"@type":"Answer","text":"Add the SMS8 MCP entry to ~/.openclaw/openclaw.json under mcp.servers.sms8. Set transport to streamable-http, url to https://mcp.sms8.io, and headers.Authorization to Bearer ${SMS8_API_KEY}. OpenClaw hot-reloads the file. The agent now has send_sms, send_otp, verify_otp, wait_for_otp, get_messages, list_devices, get_balance and create_webhook tools, routed through your paired Android."}},
+{"@type":"Question","name":"Does OpenClaw support MCP servers?","acceptedAnswer":{"@type":"Answer","text":"Yes. OpenClaw is built around Model Context Protocol from day one. The mcp.servers section of ~/.openclaw/openclaw.json accepts local stdio servers (command + args) and remote HTTP servers (url + transport + headers). Hot reload is enabled by default."}},
+{"@type":"Question","name":"How do I give my personal AI a phone number?","acceptedAnswer":{"@type":"Answer","text":"With SMS8 you pair your existing Android phone to the SMS8 dashboard once, then your AI agent uses that SIM as its outbound and inbound SMS gateway. The phone number your contacts see is the number you already own. No Twilio, no virtual number, no A2P 10DLC. Works with OpenClaw, Claude Code, Cursor, Windsurf and OpenCode out of the same SMS8 account."}},
+{"@type":"Question","name":"Can OpenClaw read incoming SMS?","acceptedAnswer":{"@type":"Answer","text":"Yes. get_messages returns recent inbox or sent SMS, filterable by direction or phone. wait_for_otp blocks the agent until an OTP-shaped SMS lands. create_webhook registers an HMAC-signed callback URL so OpenClaw can react to incoming SMS in real time."}},
+{"@type":"Question","name":"Why not use WhatsApp instead of SMS for OpenClaw?","acceptedAnswer":{"@type":"Answer","text":"OpenClaw already talks to WhatsApp natively. SMS is the gap. Banks and government portals reject WhatsApp numbers for 2FA. People who do not have your chat app cannot be reached. Critical alerts on cellular travel when Wi-Fi is down. SMS8 fills exactly that gap without replacing any of OpenClaw's chat integrations."}},
+{"@type":"Question","name":"How much does an SMS MCP for OpenClaw cost?","acceptedAnswer":{"@type":"Answer","text":"SMS8 is 16 USD per month flat after a free 5-day trial. There is no per-message fee because messages route through your own SIM, so the SMS cost is whatever your carrier already charges (often zero on an unlimited plan)."}},
+{"@type":"Question","name":"Where is openclaw.json located?","acceptedAnswer":{"@type":"Answer","text":"At ~/.openclaw/openclaw.json on Mac, Linux and Windows. The file is created automatically on first run. OpenClaw watches it for changes and reloads MCP servers without a restart."}},
+{"@type":"Question","name":"Is OpenClaw open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. Github.com/openclaw/openclaw, MIT-style license, written in TypeScript by Peter Steinberger (creator of PSPDFKit). Runs locally with persistent memory and any LLM provider (Claude, GPT, Gemini, local models)."}}
 ]}
 </script>
 HTML;
@@ -35,68 +35,109 @@ require __DIR__ . '/_header.php';
     <div class="page-hero-inner reveal">
       <span class="hero-badge"><span class="badge-dot"></span>OpenClaw &times; SMS8</span>
       <h1>Give <span class="gradient-text">OpenClaw</span> a real phone number with the SMS8 MCP</h1>
-      <p class="lede">OpenClaw is a local-first AI agent that talks through WhatsApp, Telegram, Discord, Signal and iMessage. The one channel it does not natively cover is plain SMS. SMS8 plugs that gap: add the <code>sms8</code> entry to <code>openclaw.json</code> and your personal agent can text, receive, and verify codes through your own paired Android phone.</p>
+      <p class="lede">OpenClaw already speaks WhatsApp, Telegram, Discord, Signal and iMessage. The one channel none of those bridges cover is plain SMS &mdash; the channel banks, governments and people without your chat app still use. SMS8 plugs that gap with one block in <code>openclaw.json</code>.</p>
       <div class="hero-cta">
-        <a class="btn-cta btn-lg" href="https://app.sms8.io/" target="_blank" rel="noopener">Get your SMS8 API key</a>
-        <a class="btn-ghost btn-lg" href="#config">Jump to openclaw.json</a>
+        <a class="btn-cta btn-lg" href="https://app.sms8.io/" target="_blank" rel="noopener">Get your API key</a>
+        <a class="btn-ghost btn-lg" href="#setup">Jump to setup</a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section" id="why">
+<section class="section" id="how-it-works">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Why this pairing</span>
-      <h2>OpenClaw runs the agent. SMS8 owns the SIM.</h2>
-      <p class="section-lead">OpenClaw is a personal AI with persistent memory and full system access &mdash; cron jobs, browser control, file access, 50+ chat integrations. SMS8 hands it the one channel chat bridges never reach: native SMS through a SIM card you already own.</p>
+      <span class="section-eyebrow">How it works</span>
+      <h2>What happens when OpenClaw calls <code>send_sms</code></h2>
+      <p class="section-lead">OpenClaw is local-first &mdash; it reasons on your machine, then asks SMS8 to deliver. The actual SMS leaves from the SIM in your pocket, not a rented number.</p>
     </div>
 
-    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-      <div class="step-card reveal">
-        <h3>Bridge the SMS gap</h3>
-        <p>Beeper handles WhatsApp / iMessage / Signal. OpenClaw lights those up natively. SMS8 fills the missing column: real GSM SMS, your number, your SIM, no bridge required.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>Hot-reload, no restart</h3>
-        <p>OpenClaw watches <code>openclaw.json</code> live. Drop in the SMS8 entry, save the file, and the nine new tools appear in your agent within seconds. No daemon restart, no <code>kill -HUP</code>.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>Real-number 2FA / OTP</h3>
-        <p>Bank apps, government portals, KYC flows refuse virtual numbers. With <code>wait_for_otp</code> your OpenClaw agent can paste codes that land on your actual SIM into autonomous tasks.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>$16/month flat, no per-message</h3>
-        <p>No Twilio account, no A2P 10DLC, no per-segment billing. Your SMS cost is whatever your carrier already charges (often $0 on unlimited).</p>
+    <div class="flow-wrap reveal" aria-label="OpenClaw to SMS8 to Android to recipient flow">
+      <svg class="flow-svg" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path class="flow-line" d="M 90 100 L 810 100" />
+
+        <g transform="translate(90,100)">
+          <circle class="flow-node-bg is-active delay-1" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <path d="M3 7l8-4 8 4M3 7l8 4 8-4M3 7v10l8 4 8-4V7" />
+          </g>
+          <text class="flow-node-label" y="58">OpenClaw</text>
+          <text class="flow-node-sub" y="74">local agent</text>
+        </g>
+
+        <g transform="translate(290,100)">
+          <circle class="flow-node-bg is-active delay-2" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M7 9l-2 3 2 3M17 9l2 3-2 3M13 8l-2 8"/>
+          </g>
+          <text class="flow-node-label" y="58">MCP client</text>
+          <text class="flow-node-sub" y="74">openclaw.json</text>
+        </g>
+
+        <g transform="translate(470,100)">
+          <circle class="flow-node-bg is-active delay-3" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/>
+          </g>
+          <text class="flow-node-label" y="58">SMS8 MCP</text>
+          <text class="flow-node-sub" y="74">mcp.sms8.io</text>
+        </g>
+
+        <g transform="translate(650,100)">
+          <circle class="flow-node-bg is-active delay-4" r="36"/>
+          <g class="flow-node-icon" transform="translate(-9,-13)">
+            <rect x="2" y="2" width="14" height="22" rx="2.5"/>
+            <line x1="2" y1="20" x2="16" y2="20"/>
+            <circle cx="9" cy="22" r="0.8" fill="#c4b5fd"/>
+          </g>
+          <text class="flow-node-label" y="58">Your Android</text>
+          <text class="flow-node-sub" y="74">paired SIM</text>
+        </g>
+
+        <g transform="translate(810,100)">
+          <circle class="flow-node-bg is-active delay-4" r="36"/>
+          <g class="flow-node-icon" transform="translate(-12,-12)">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 22c0-5 4-8 8-8s8 3 8 8"/>
+          </g>
+          <text class="flow-node-label" y="58">Recipient</text>
+          <text class="flow-node-sub" y="74">real phone</text>
+        </g>
+
+        <circle class="flow-packet"     r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+        <circle class="flow-packet p2"  r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+        <circle class="flow-packet p3"  r="4.5" style="offset-path: path('M 90 100 L 290 100 L 470 100 L 650 100 L 810 100');"/>
+      </svg>
+
+      <div class="flow-step-list">
+        <div class="flow-step reveal"><span class="num">01</span><strong>OpenClaw decides</strong><span>Cron skill or chat trigger fires. Agent reasons locally, picks <code>send_sms</code> from the MCP tool list.</span></div>
+        <div class="flow-step reveal"><span class="num">02</span><strong>Hot-reloaded MCP client</strong><span>OpenClaw watches <code>openclaw.json</code> live. The SMS8 server is already loaded, no restart.</span></div>
+        <div class="flow-step reveal"><span class="num">03</span><strong>SMS8 routes to your phone</strong><span>JSON-RPC over HTTPS with your Bearer token. SMS8 wakes your paired Android via a signed push.</span></div>
+        <div class="flow-step reveal"><span class="num">04</span><strong>Recipient sees your number</strong><span>Real SMS from the number contacts already saved. No bridge, no shortcode, no spam filter.</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="config">
+<section class="section section-alt" id="setup">
   <div class="container">
     <div class="section-head reveal">
       <span class="section-eyebrow">Setup</span>
-      <h2>Three steps. Three minutes.</h2>
+      <h2>One block in <code>openclaw.json</code></h2>
+      <p class="section-lead">OpenClaw watches <code>~/.openclaw/openclaw.json</code> live. Drop this in under <code>mcp.servers</code>, save the file, and the 9 SMS8 tools appear in your next agent reply.</p>
     </div>
-    <div class="split-row reveal" style="align-items: stretch;">
-      <div class="split-text">
-        <h3 style="color:#c4b5fd;font-size:17px;margin-bottom:12px;">1. Install OpenClaw</h3>
-<pre class="code-block">curl -fsSL https://openclaw.ai/install.sh | bash
-# or
-npm i -g openclaw</pre>
-        <p style="margin-top:18px;color:#9999ad;font-size:14px;">Mac, Linux and Windows. <a href="https://docs.openclaw.ai" target="_blank" rel="noopener" style="color:#c4b5fd;">OpenClaw docs</a>.</p>
 
-        <h3 style="color:#c4b5fd;font-size:17px;margin-top:28px;margin-bottom:12px;">2. Get an SMS8 API key</h3>
-<pre class="code-block">1. Sign up at https://app.sms8.io (free 5-day trial)
-2. Install SMS8 Android app, scan dashboard QR
-3. Open the API page, copy your key</pre>
-
-        <h3 style="color:#c4b5fd;font-size:17px;margin-top:28px;margin-bottom:12px;">3. Add SMS8 to openclaw.json</h3>
-        <p style="font-size:14px;color:#9999ad;">Open <code>~/.openclaw/openclaw.json</code> (created on first run). Under <code>mcp.servers</code>, add the <code>sms8</code> entry. OpenClaw picks the change up live.</p>
-      </div>
-      <div class="visual-card">
-        <div class="visual-card-header">~/.openclaw/openclaw.json &middot; remote MCP</div>
+    <div class="reveal" style="max-width:760px;margin:0 auto;">
+      <div class="code-card">
+        <div class="code-card-head">
+          <span class="code-card-label">~/.openclaw/openclaw.json</span>
+          <button type="button" class="code-card-copy" aria-label="Copy openclaw.json snippet">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="label">Copy</span>
+          </button>
+        </div>
 <pre>{
   <span class="k">mcp</span>: {
     <span class="k">servers</span>: {
@@ -104,18 +145,14 @@ npm i -g openclaw</pre>
         <span class="k">url</span>: <span class="s">"https://mcp.sms8.io"</span>,
         <span class="k">transport</span>: <span class="s">"streamable-http"</span>,
         <span class="k">headers</span>: {
-          <span class="k">Authorization</span>:
-            <span class="s">"Bearer ${SMS8_API_KEY}"</span>
+          <span class="k">Authorization</span>: <span class="s">"Bearer ${SMS8_API_KEY}"</span>
         }
       }
     }
   }
 }</pre>
       </div>
-    </div>
-
-    <div class="reveal" style="max-width:820px;margin:36px auto 0;text-align:center;color:#9999ad;font-size:14px;">
-      Set <code>SMS8_API_KEY</code> in your shell (e.g. <code>~/.zshrc</code>) so the key never lands in the JSON file. Confirm the SMS8 tools are loaded by asking your agent: <em>"List the SMS8 MCP tools you have."</em>
+      <p style="margin-top:16px;color:#9999ad;font-size:13.5px;text-align:center;">Export <code>SMS8_API_KEY</code> in your shell (e.g. <code>~/.zshrc</code>) so the key never lands in the JSON file.</p>
     </div>
   </div>
 </section>
@@ -123,20 +160,20 @@ npm i -g openclaw</pre>
 <section class="section" id="tools">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">What OpenClaw gains</span>
+      <span class="section-eyebrow">What you get</span>
       <h2>Nine tools registered the moment <code>openclaw.json</code> reloads</h2>
-      <p class="section-lead">Identical surface to Claude Code, Cursor, Windsurf, OpenCode. One SMS8 account behind all of them.</p>
+      <p class="section-lead">Identical surface to Claude Code, Cursor, Windsurf and OpenCode. One SMS8 account behind all of them.</p>
     </div>
-    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-      <div class="step-card reveal"><h3><code>setup_sms8</code></h3><p>Handshake. Validates the API key, returns devices, plan and integration context.</p></div>
+    <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
       <div class="step-card reveal"><h3><code>send_sms</code></h3><p>Send a single SMS through a paired Android. Per-device and per-SIM routing.</p></div>
-      <div class="step-card reveal"><h3><code>send_otp</code></h3><p>Generate and dispatch a one-time code. Configurable length, expiry and attempts.</p></div>
+      <div class="step-card reveal"><h3><code>send_otp</code></h3><p>Generate and dispatch a one-time code. Configurable length, expiry, attempts.</p></div>
       <div class="step-card reveal"><h3><code>verify_otp</code></h3><p>Constant-time compare against the latest OTP for that phone.</p></div>
-      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>wait_for_otp</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Block until an OTP-shaped SMS lands on your paired Android. Extracts the code automatically.</p></div>
+      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>wait_for_otp</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Block the agent until an OTP-shaped SMS lands on your paired Android.</p></div>
       <div class="step-card reveal"><h3><code>get_messages</code></h3><p>Fetch recent inbox or sent SMS. Filter by direction or phone.</p></div>
       <div class="step-card reveal"><h3><code>list_devices</code></h3><p>List paired Android devices. Pick the sender when load-balancing.</p></div>
       <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>get_balance</code> <span style="font-size:10px;background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;">NEW</span></h3><p>Quick credit check. Returns remaining SMS, days until renewal, summary.</p></div>
       <div class="step-card reveal"><h3><code>create_webhook</code></h3><p>Register a callback URL for inbound SMS and delivery events. HMAC-signed.</p></div>
+      <div class="step-card reveal"><h3><code>setup_sms8</code></h3><p>Handshake. Validates the API key, returns devices, plan and integration context.</p></div>
     </div>
   </div>
 </section>
@@ -144,64 +181,45 @@ npm i -g openclaw</pre>
 <section class="section section-alt" id="use-cases">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Use cases</span>
-      <h2>What OpenClaw + SMS8 looks like in real life</h2>
+      <span class="section-eyebrow">Real prompts</span>
+      <h2>What people actually use SMS8 in OpenClaw for</h2>
     </div>
 
     <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
       <div class="step-card reveal">
-        <h3>"Text my partner when I'm leaving the office"</h3>
-        <p>Cron skill in OpenClaw watches your calendar. When the last meeting ends, it calls <code>send_sms</code> from your real number. They get a normal SMS, not a chatbot message, not an unknown short code.</p>
+        <h3>"Text my partner when my last meeting ends"</h3>
+        <p>Cron skill watches your calendar. <code>send_sms</code> fires from your real number when the day wraps. Just a normal SMS, not a chatbot message.</p>
       </div>
       <div class="step-card reveal">
         <h3>"Paste the bank OTP into my session"</h3>
-        <p>OpenClaw drives the browser to your bank's portal. When the OTP screen appears, it calls <code>wait_for_otp</code> against your SIM, gets the code, pastes it. No screenshare, no manual relay.</p>
+        <p>Agent opens the bank portal in a browser. When the OTP screen appears, <code>wait_for_otp</code> pulls the code off your SIM and pastes it.</p>
       </div>
       <div class="step-card reveal">
-        <h3>"Forward urgent SMS to my Telegram"</h3>
-        <p>OpenClaw registers <code>create_webhook</code> pointing at its own webhook handler. Every inbound SMS is read by the agent and the important ones are forwarded into the Telegram chat where you actually live.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>"SMS me when the Mac mini overheats"</h3>
-        <p>OpenClaw has full system access. Pair it with a temperature check and call <code>send_sms</code> when a threshold trips. Real SMS to your real number even when you are out of Wi-Fi range and chat apps cannot reach you.</p>
-      </div>
-      <div class="step-card reveal">
-        <h3>"Verify a phone for a sign-up I'm doing"</h3>
-        <p>Need to register on a site that demands a real number? OpenClaw uses your number (via <code>send_otp</code>/<code>wait_for_otp</code>) and finishes the signup. No disposable-SIM service required when it should be you on the other end.</p>
+        <h3>"SMS me urgent emails when I'm offline"</h3>
+        <p>OpenClaw watches Gmail. If a VIP sends mail while you are Do-Not-Disturb, it summarizes and SMS-es you the headline. Cellular delivers when Wi-Fi cannot.</p>
       </div>
       <div class="step-card reveal">
         <h3>"Daily morning summary by SMS"</h3>
-        <p>OpenClaw composes a 160-character morning digest (weather, top emails, calendar). Cron skill fires <code>send_sms</code> at 7:30 AM. Shows up as a normal text from your own number, readable on the lock screen.</p>
+        <p>OpenClaw composes a 160-character digest at 7:30 AM (weather, top emails, calendar). Lands on your lock screen as a normal text.</p>
+      </div>
+      <div class="step-card reveal">
+        <h3>"Forward inbound SMS into Telegram"</h3>
+        <p><code>create_webhook</code> points at OpenClaw's webhook handler. Every inbound SMS is read by the agent and forwarded to the Telegram chat you actually live in.</p>
+      </div>
+      <div class="step-card reveal">
+        <h3>"Sign me up on a site that needs my real number"</h3>
+        <p>Where chat-app numbers fail (KYC, banks, government), OpenClaw uses your real SIM through SMS8. No disposable-SIM service required.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section" id="why-sms">
+<section class="section" id="vs-opencode">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Why SMS at all</span>
-      <h2>OpenClaw already does WhatsApp. Why bother with SMS?</h2>
-    </div>
-    <div class="reveal" style="max-width:820px;margin:0 auto;color:#cfcfdc;font-size:15.5px;line-height:1.85;">
-      <p>OpenClaw's chat-app integrations cover the channels where your contacts live by choice. SMS covers the channels where they live by necessity:</p>
-      <ul style="margin: 18px 0 18px 22px; color:#cfcfdc;">
-        <li><strong>2FA and bank apps.</strong> Almost every regulated service refuses VOIP numbers. They need a real SIM with carrier-routed SMS.</li>
-        <li><strong>Government / KYC.</strong> National IDs, tax portals, residency apps &mdash; SMS-only verification, no exceptions.</li>
-        <li><strong>People who do not have your chat app.</strong> Your accountant. A delivery driver. A new client. SMS is the lowest common denominator.</li>
-        <li><strong>Critical alerts that must arrive.</strong> When the data-only Mac mini melts down, your Wi-Fi went with it. SMS travels on cellular and lands every time.</li>
-      </ul>
-      <p>SMS8 is how OpenClaw reaches all of those without your buying a Twilio plan or registering an A2P brand.</p>
-    </div>
-  </div>
-</section>
-
-<section class="section section-alt" id="opencode-vs-openclaw">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-eyebrow">Which agent fits you</span>
-      <h2>OpenClaw vs OpenCode &mdash; pick the one that matches your workflow</h2>
-      <p class="section-lead">Both speak MCP, both work with SMS8, both are open source. They solve different problems.</p>
+      <span class="section-eyebrow">Which AI agent</span>
+      <h2>OpenClaw vs OpenCode &mdash; both work with SMS8</h2>
+      <p class="section-lead">Pick by job. Many people install both with the same SMS8 API key.</p>
     </div>
     <div class="compare-wrap reveal">
       <table class="compare">
@@ -209,45 +227,42 @@ npm i -g openclaw</pre>
           <tr><th>Trait</th><th>OpenClaw</th><th>OpenCode</th></tr>
         </thead>
         <tbody>
-          <tr><td>Primary persona</td>            <td class="ok">Personal AI for daily life</td>           <td class="ok">Coding agent for the terminal / IDE</td></tr>
+          <tr><td>Primary use</td>                <td class="ok">Personal AI for daily life</td>           <td class="ok">Coding agent for terminal / IDE</td></tr>
           <tr><td>Chat-app integrations</td>      <td class="ok">WhatsApp, Telegram, Discord, Signal, iMessage</td><td class="bad">None native</td></tr>
-          <tr><td>System access</td>              <td class="ok">Full (browser, files, shell, cron)</td>  <td class="ok">Repo &amp; shell only</td></tr>
-          <tr><td>Best at</td>                    <td class="ok">Automating life admin</td>               <td class="ok">Writing and refactoring code</td></tr>
-          <tr><td>Config file</td>                <td class="ok"><code>~/.openclaw/openclaw.json</code></td><td class="ok"><code>opencode.json</code> in repo or <code>~/.config/opencode/</code></td></tr>
-          <tr><td>MCP transport syntax</td>       <td class="ok"><code>transport: streamable-http</code></td><td class="ok"><code>type: remote</code></td></tr>
-          <tr><td>Hot reload of config</td>       <td class="ok">Yes, live file watch</td>                <td class="bad">Restart needed</td></tr>
-          <tr><td>SMS8 integration</td>           <td class="ok">Same 9 tools</td>                        <td class="ok">Same 9 tools</td></tr>
+          <tr><td>System access</td>              <td class="ok">Full (browser, files, shell, cron)</td>  <td class="ok">Repo + shell</td></tr>
+          <tr><td>Config file</td>                <td class="ok"><code>~/.openclaw/openclaw.json</code></td><td class="ok"><code>opencode.json</code></td></tr>
+          <tr><td>MCP transport</td>              <td class="ok"><code>streamable-http</code></td><td class="ok"><code>type: remote</code></td></tr>
+          <tr><td>Hot reload config</td>          <td class="ok">Yes</td>                <td class="bad">Restart needed</td></tr>
+          <tr><td>SMS8 tool count</td>            <td class="ok">9 tools</td>                       <td class="ok">9 tools</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="reveal" style="max-width:820px;margin:36px auto 0;color:#9999ad;font-size:14.5px;line-height:1.7;">
-      Many users run both side by side. OpenClaw owns inbox / chat / cron / browser. OpenCode owns the repo. SMS8 is wired into both with the same API key, so a code change in OpenCode and a "tell me when this deploys" in OpenClaw share the same SMS channel.
-    </p>
   </div>
 </section>
 
-<section class="section" id="faq">
+<section class="section section-alt" id="faq">
   <div class="container">
     <div class="section-head reveal">
       <span class="section-eyebrow">FAQ</span>
-      <h2>OpenClaw &times; SMS8 questions</h2>
+      <h2>Real questions people search and ask AI assistants</h2>
+      <p class="section-lead">Mined from Google, Reddit, OpenClaw community and AI prompts.</p>
     </div>
     <div class="faq reveal">
-      <details open><summary>Does OpenClaw support MCP servers?</summary><p>Yes. OpenClaw is built around Model Context Protocol from day one. The <code>mcp.servers</code> section of <code>~/.openclaw/openclaw.json</code> accepts both local stdio servers (<code>command</code> + <code>args</code>) and remote HTTP servers (<code>url</code> + <code>transport</code> + <code>headers</code>). Hot reload is enabled, so changes take effect without a restart.</p></details>
+      <details open><summary>How do I send SMS from OpenClaw?</summary><p>Add the SMS8 MCP entry to <code>~/.openclaw/openclaw.json</code> under <code>mcp.servers.sms8</code>. Set <code>transport</code> to <code>streamable-http</code>, <code>url</code> to <code>https://mcp.sms8.io</code>, and <code>headers.Authorization</code> to <code>Bearer ${SMS8_API_KEY}</code>. OpenClaw hot-reloads. The agent now has <code>send_sms</code>, <code>send_otp</code>, <code>verify_otp</code>, <code>wait_for_otp</code>, <code>get_messages</code>, <code>list_devices</code>, <code>get_balance</code> and <code>create_webhook</code>, all routed through your paired Android.</p></details>
 
-      <details><summary>What does the SMS8 MCP add to OpenClaw?</summary><p>Nine new tools your OpenClaw agent can call directly: <code>setup_sms8</code>, <code>send_sms</code>, <code>send_otp</code>, <code>verify_otp</code>, <code>wait_for_otp</code>, <code>get_messages</code>, <code>list_devices</code>, <code>get_balance</code>, and <code>create_webhook</code>.</p></details>
+      <details><summary>Does OpenClaw support MCP servers?</summary><p>Yes. OpenClaw is built around Model Context Protocol from day one. The <code>mcp.servers</code> section of <code>openclaw.json</code> accepts both local stdio (<code>command</code> + <code>args</code>) and remote HTTP (<code>url</code> + <code>transport</code> + <code>headers</code>). Hot reload is the default.</p></details>
 
-      <details><summary>How do I add SMS8 MCP to openclaw.json?</summary><p>Open <code>~/.openclaw/openclaw.json</code>. Inside the <code>mcp</code> section, under <code>servers</code>, add an entry named <code>sms8</code> with <code>url</code> set to <code>https://mcp.sms8.io</code>, <code>transport</code> set to <code>streamable-http</code> and a <code>headers</code> block carrying <code>Authorization: Bearer ${SMS8_API_KEY}</code>. Save the file. OpenClaw picks the change up live.</p></details>
+      <details><summary>How do I give my personal AI a phone number?</summary><p>Pair your existing Android phone to the SMS8 dashboard once. Your AI agent uses that SIM as its SMS gateway. Contacts see the number you already own. No Twilio, no virtual number, no A2P 10DLC. Works with OpenClaw, Claude Code, Cursor, Windsurf and OpenCode from the same SMS8 account.</p></details>
 
-      <details><summary>Why pair OpenClaw with SMS8 instead of using Beeper or iMessage?</summary><p>OpenClaw already speaks to WhatsApp, Telegram, Discord and Signal through bridges. SMS is the one channel that none of those cover. SMS8 plugs that gap: your agent can now SMS a real phone number, receive SMS replies, and use OTPs in verification flows.</p></details>
+      <details><summary>Can OpenClaw read incoming SMS?</summary><p>Yes. <code>get_messages</code> returns recent inbox or sent SMS, filterable by direction or phone. <code>wait_for_otp</code> blocks the agent until an OTP-shaped SMS lands. <code>create_webhook</code> registers an HMAC-signed callback so OpenClaw can react in real time.</p></details>
 
-      <details><summary>Can OpenClaw wait for an incoming SMS?</summary><p>Yes. The <code>wait_for_otp</code> tool blocks until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code. Default timeout 60 seconds, configurable up to 180.</p></details>
+      <details><summary>Why not use WhatsApp instead of SMS for OpenClaw?</summary><p>OpenClaw already talks to WhatsApp. SMS is the gap. Banks and government portals reject WhatsApp numbers for 2FA. People without your chat app cannot be reached. Critical alerts on cellular travel when Wi-Fi is down. SMS8 fills exactly that gap.</p></details>
 
-      <details><summary>Is OpenClaw open source?</summary><p>Yes. OpenClaw lives at <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">github.com/openclaw/openclaw</a>, written in TypeScript by Peter Steinberger (creator of PSPDFKit). It runs locally with persistent memory and supports any LLM provider.</p></details>
+      <details><summary>How much does an SMS MCP for OpenClaw cost?</summary><p>SMS8 is $16/month flat after a free 5-day trial. There is no per-message fee because messages route through your own SIM, so SMS cost is whatever your carrier already charges.</p></details>
 
-      <details><summary>Where is the SMS8 MCP server hosted?</summary><p>At <code>mcp.sms8.io</code>. It speaks JSON-RPC 2.0 over HTTPS, MCP revision 2024-11-05, both streamable-http and SSE transports. Source: <a href="https://github.com/1fancy/sms8-sms-gateway">github.com/1fancy/sms8-sms-gateway</a>.</p></details>
+      <details><summary>Where is openclaw.json located?</summary><p>At <code>~/.openclaw/openclaw.json</code> on Mac, Linux and Windows. Created on first run. OpenClaw watches the file and hot-reloads MCP servers without a restart.</p></details>
 
-      <details><summary>Can I share the same API key with Claude Code, OpenCode and OpenClaw?</summary><p>Yes. One SMS8 API key works across every MCP client (Claude Code, Cursor, Windsurf, OpenCode, OpenClaw and any future MCP-compatible agent).</p></details>
+      <details><summary>Is OpenClaw open source?</summary><p>Yes. <a href="https://github.com/openclaw/openclaw">github.com/openclaw/openclaw</a>, written in TypeScript by Peter Steinberger (creator of PSPDFKit). Runs locally with persistent memory and any LLM provider.</p></details>
     </div>
   </div>
 </section>
@@ -256,10 +271,10 @@ npm i -g openclaw</pre>
   <div class="container">
     <div class="cta-banner-inner reveal">
       <h2>Give OpenClaw a phone number in 3 minutes</h2>
-      <p>Free 5-day trial. No credit card. Same API key works in Claude Code, Cursor, Windsurf and OpenCode if you also use them.</p>
+      <p>Free 5-day trial. No credit card. Same API key works in Claude Code, Cursor, Windsurf and OpenCode.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/">Create free account</a>
-        <a class="btn-ghost btn-lg" href="/opencode-sms-mcp-server">Also use OpenCode</a>
+        <a class="btn-ghost btn-lg" href="/opencode-sms-mcp-server">See OpenCode setup</a>
       </div>
     </div>
   </div>
