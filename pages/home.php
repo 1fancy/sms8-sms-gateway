@@ -44,7 +44,7 @@ require __DIR__ . '/_header.php';
 <section class="section" id="tools">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">Seven tools</span>
+      <span class="section-eyebrow">Nine tools</span>
       <h2>What your AI assistant can do</h2>
       <p class="section-lead">Every tool re-uses the same send pipeline as the SMS8 dashboard. Credits, retries, multi-device routing and webhook signing behave identically to a direct API call.</p>
     </div>
@@ -53,8 +53,10 @@ require __DIR__ . '/_header.php';
       <div class="step-card reveal"><h3><code>send_sms</code></h3><p>Send a single SMS through a paired Android. Per-device and per-SIM routing.</p></div>
       <div class="step-card reveal"><h3><code>send_otp</code></h3><p>Generate and dispatch a verification code. Configurable length, expiry and attempts.</p></div>
       <div class="step-card reveal"><h3><code>verify_otp</code></h3><p>Constant-time compare against the latest OTP. Returns remaining attempts on mismatch.</p></div>
+      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>wait_for_otp</code> <span style="font-size:10px; background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; letter-spacing:0.06em;">NEW</span></h3><p>Block until an OTP-shaped SMS lands on your paired Android. Extracts the code. Closes the autonomous-agent gap.</p></div>
       <div class="step-card reveal"><h3><code>get_messages</code></h3><p>Fetch recent inbox or sent SMS. Filter by direction or phone.</p></div>
       <div class="step-card reveal"><h3><code>list_devices</code></h3><p>List paired Android devices. Pick the sender when load-balancing across SIMs.</p></div>
+      <div class="step-card reveal" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));"><h3 style="color:#34d399;"><code>get_balance</code> <span style="font-size:10px; background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; letter-spacing:0.06em;">NEW</span></h3><p>Lightweight credit check. Returns remaining SMS, days until renewal, one-line human summary.</p></div>
       <div class="step-card reveal"><h3><code>create_webhook</code></h3><p>Register a callback URL for inbound SMS. HTTPS only, SSRF-protected, HMAC-signed.</p></div>
       <div class="step-card reveal" style="background: linear-gradient(180deg, rgba(168,85,247,0.10), rgba(168,85,247,0.04)); border-color: rgba(168,85,247,0.4);">
         <h3 style="color: #c4b5fd;">Read the docs</h3>
