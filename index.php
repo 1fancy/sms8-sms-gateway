@@ -17,7 +17,7 @@
  *
  * Repo:    https://github.com/1fancy/sms8-sms-gateway
  * Docs:    https://mcp.sms8.io
- * Contact: hello@sms8.io
+ * Contact: info@sms8.io
  */
 
 // ── Bootstrap the main SMS8 app (Option A: share code + DB) ───────────────
