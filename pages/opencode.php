@@ -17,7 +17,7 @@ $jsonld = <<<'HTML'
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"How do I send SMS from OpenCode?","acceptedAnswer":{"@type":"Answer","text":"Add the SMS8 MCP server to opencode.json under the mcp key. Set type to remote, url to https://mcp.sms8.io and a headers.Authorization Bearer line with your SMS8 API key. Restart OpenCode. Your agent now has send_sms, send_otp, verify_otp, wait_for_otp, get_messages, list_devices, get_balance and create_webhook tools. SMS routes through your own paired Android phone."}},
-{"@type":"Question","name":"Is there a free SMS MCP server for AI agents?","acceptedAnswer":{"@type":"Answer","text":"SMS8 offers a 5-day free trial of its SMS MCP server with no credit card. After the trial it costs 16 USD per month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often zero on an unlimited plan)."}},
+{"@type":"Question","name":"Is there a free SMS MCP server for AI agents?","acceptedAnswer":{"@type":"Answer","text":"SMS8 offers a 5-day free trial of its SMS MCP server with no credit card. After the trial it costs 29 USD per month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often zero on an unlimited plan)."}},
 {"@type":"Question","name":"What is the best SMS MCP server for vibe coders?","acceptedAnswer":{"@type":"Answer","text":"SMS8 MCP works with every MCP-compatible AI coding tool: Claude Code, Cursor, Windsurf and OpenCode. It exposes nine tools through one Bearer-authenticated endpoint at mcp.sms8.io. A single API key works in every tool, so switching editors does not break your SMS integration. The MCP source is MIT-licensed on GitHub."}},
 {"@type":"Question","name":"Can my OpenCode agent wait for an SMS to arrive?","acceptedAnswer":{"@type":"Answer","text":"Yes. The wait_for_otp tool blocks the agent until an OTP-shaped SMS lands on your paired Android, then extracts the numeric code automatically. Configurable filters for sender phone, device, SIM slot, body substring and code length. Default timeout 60 seconds, configurable up to 180."}},
 {"@type":"Question","name":"Do I need Twilio to send SMS from an AI agent?","acceptedAnswer":{"@type":"Answer","text":"No. SMS8 uses your own Android phone and SIM card as the gateway. No Twilio account, no virtual number rental, no A2P 10DLC registration, no per-segment billing. Your existing carrier plan is the only SMS cost."}},
@@ -35,7 +35,7 @@ require __DIR__ . '/_header.php';
     <div class="page-hero-inner reveal">
       <span class="hero-badge"><span class="badge-dot"></span>OpenCode &times; SMS8</span>
       <h1>Send SMS from <span class="gradient-text">OpenCode</span> with the SMS8 MCP server</h1>
-      <p class="lede">OpenCode is the open-source AI coding agent from sst &mdash; MIT, 160k+ stars, runs locally, picks any model. SMS8 ships an MCP server at <code>mcp.sms8.io</code>. One block in <code>opencode.json</code> and your agent can text, OTP, and receive replies through your own Android phone. No Twilio. No A2P. $16/month flat.</p>
+      <p class="lede">OpenCode is the open-source AI coding agent from sst &mdash; MIT, 160k+ stars, runs locally, picks any model. SMS8 ships an MCP server at <code>mcp.sms8.io</code>. One block in <code>opencode.json</code> and your agent can text, OTP, and receive replies through your own Android phone. No Twilio. No A2P. $29/month flat.</p>
       <div class="hero-cta">
         <a class="btn-cta btn-lg" href="https://app.sms8.io/" target="_blank" rel="noopener">Get your API key</a>
         <a class="btn-ghost btn-lg" href="#setup">Jump to setup</a>
@@ -216,7 +216,7 @@ require __DIR__ . '/_header.php';
       </div>
       <div class="step-card reveal">
         <h3>"What is the SMS bill if I switch from Twilio?"</h3>
-        <p>Agent reads your Twilio CSV, applies $0 per-message and $16/month, returns the delta. Most users see 90%+ savings.</p>
+        <p>Agent reads your Twilio CSV, applies $0 per-message and $29/month, returns the delta. Most users see 90%+ savings.</p>
       </div>
       <div class="step-card reveal">
         <h3>"Stream incoming SMS into my dev server"</h3>
@@ -236,7 +236,7 @@ require __DIR__ . '/_header.php';
     <div class="faq reveal">
       <details open><summary>How do I send SMS from OpenCode?</summary><p>Add the SMS8 MCP server to <code>opencode.json</code> under the <code>mcp</code> key. Set <code>type</code> to <code>remote</code>, <code>url</code> to <code>https://mcp.sms8.io</code> and a <code>headers.Authorization</code> Bearer line with your SMS8 API key. Restart OpenCode. Your agent now has <code>send_sms</code>, <code>send_otp</code>, <code>verify_otp</code>, <code>wait_for_otp</code>, <code>get_messages</code>, <code>list_devices</code>, <code>get_balance</code> and <code>create_webhook</code> tools. SMS routes through your own paired Android phone.</p></details>
 
-      <details><summary>Is there a free SMS MCP server for AI agents?</summary><p>SMS8 offers a 5-day free trial with no credit card. After the trial it costs $16/month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often $0 on an unlimited plan).</p></details>
+      <details><summary>Is there a free SMS MCP server for AI agents?</summary><p>SMS8 offers a 5-day free trial with no credit card. After the trial it costs $29/month flat. There is no per-message cost because SMS goes through your own SIM card, not a Twilio number, so the actual SMS portion is whatever your carrier charges (often $0 on an unlimited plan).</p></details>
 
       <details><summary>What is the best SMS MCP server for vibe coders?</summary><p>SMS8 MCP works with every MCP-compatible AI coding tool: Claude Code, Cursor, Windsurf and OpenCode. It exposes nine tools through one Bearer-authenticated endpoint at <code>mcp.sms8.io</code>. A single API key works in every tool, so switching editors does not break your SMS integration. The MCP source is MIT-licensed on <a href="https://github.com/1fancy/sms8-sms-gateway">GitHub</a>.</p></details>
 

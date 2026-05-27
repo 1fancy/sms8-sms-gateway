@@ -175,7 +175,7 @@ require __DIR__ . '/_header.php';
       <details><summary>Do I need A2P 10DLC?</summary><p>No. SMS8 uses your own Android phone and SIM card as the gateway. No A2P 10DLC registration, no per-message carrier fees, no phone-number provisioning.</p></details>
       <details><summary>How do I add SMS to a Claude Code project?</summary><p>Add the MCP server to <code>~/.config/claude/mcp-servers.json</code> with the HTTP transport pointing at <code>https://mcp.sms8.io</code> and your SMS8 API key as a Bearer token. Or run <code>/plugin marketplace add 1fancy/sms8-sms-gateway</code> then <code>/plugin install sms8-sms-gateway</code>.</p></details>
       <details><summary>Does this work with Cursor and Windsurf?</summary><p>Yes. Both support HTTP MCP servers. Add <code>https://mcp.sms8.io</code> with your SMS8 API key as a Bearer header to <code>~/.cursor/mcp.json</code> or <code>~/.codeium/windsurf/mcp_config.json</code>.</p></details>
-      <details><summary>Is this a Twilio alternative?</summary><p>Yes. SMS8 uses your own Android phone with your existing SIM. No per-message fees, no A2P 10DLC, no phone number to provision. Flat pricing from $16/month with unlimited SMS.</p></details>
+      <details><summary>Is this a Twilio alternative?</summary><p>Yes. SMS8 uses your own Android phone with your existing SIM. No per-message fees, no A2P 10DLC, no phone number to provision. Flat pricing from $29/month with unlimited SMS.</p></details>
       <details><summary>Is the source code public?</summary><p>Yes, MIT-licensed at <a href="https://github.com/1fancy/sms8-sms-gateway">github.com/1fancy/sms8-sms-gateway</a>.</p></details>
     </div>
   </div>
