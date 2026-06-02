@@ -1,6 +1,6 @@
 {
   "name": "sms-otp-using-myphone",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Send and verify SMS OTP codes using your own phone — no Twilio, no per-message fees. Free CLI for 2FA, phone verification, and login flows. Wraps the SMS8 platform.",
   "type": "module",
   "bin": {

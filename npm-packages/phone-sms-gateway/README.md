@@ -61,10 +61,10 @@ phone-sms-gateway send <phone> "<message>"
 # OTP / 2FA
 phone-sms-gateway otp send <phone>
 phone-sms-gateway otp verify <phone> <code>
-phone-sms-gateway otp wait <phone> [--timeout=120]
+phone-sms-gateway otp wait <sender-phone> [--timeout=120]
 
 # Inbox
-phone-sms-gateway inbox [--limit=25] [--received] [--sent]
+phone-sms-gateway inbox [--limit=25] [--received] [--sent] [--phone=+14155550100]
 
 # Devices
 phone-sms-gateway devices
@@ -72,6 +72,45 @@ phone-sms-gateway devices
 # Account
 phone-sms-gateway balance
 phone-sms-gateway setup
+```
+
+### Device / SIM routing
+
+Pick which paired Android phone (and which SIM on multi-SIM phones) sends each message:
+
+```bash
+phone-sms-gateway send +14155550100 "Hi" --device-id=10700 --sim-slot=2
+phone-sms-gateway send +14155550100 "Hi" --devices=10700,10701|0
+phone-sms-gateway send +14155550100 "Broadcast" --option=1     # all devices
+phone-sms-gateway send +14155550100 "Broadcast" --option=2     # all SIMs across all devices
+phone-sms-gateway send +14155550100 "Hi" --random-device       # load-balance
+```
+
+The same flags work on `otp send` and `otp wait`. Run `phone-sms-gateway devices` to list IDs.
+
+### OTP send options
+
+```bash
+phone-sms-gateway otp send +14155550100 --length=8 --expires-in=180
+phone-sms-gateway otp send +14155550100 --template="Your YourApp code: {code}"
+```
+
+### OTP verify
+
+`otp verify` checks the most-recent unverified code for the phone. No device routing
+needed (the code lives server-side).
+
+```bash
+phone-sms-gateway otp verify +14155550100 482937
+```
+
+### OTP wait
+
+`otp wait` watches incoming SMS on a paired Android and extracts the verification code.
+Pass the sender's phone or partial match:
+
+```bash
+CODE=$(phone-sms-gateway otp wait +Google --contains="Google" --timeout=180)
 ```
 
 ## Example: send notifications from a cron job

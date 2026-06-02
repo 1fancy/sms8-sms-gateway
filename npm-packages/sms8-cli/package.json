@@ -1,6 +1,6 @@
 {
   "name": "sms8-cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Free SMS gateway CLI — send SMS and OTP verification codes from your terminal through your own Android phone. No Twilio, no per-message fees, no A2P 10DLC. Built on the SMS8 platform.",
   "type": "module",
   "bin": {

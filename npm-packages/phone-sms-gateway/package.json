@@ -1,6 +1,6 @@
 {
   "name": "phone-sms-gateway",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Phone SMS gateway — turn your Android phone into a free SMS gateway. Send SMS, OTPs, and verification codes from any CLI or script without Twilio, Vonage, or per-message fees. Wraps the SMS8 platform.",
   "type": "module",
   "bin": {

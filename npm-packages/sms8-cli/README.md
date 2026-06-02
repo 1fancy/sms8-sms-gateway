@@ -59,11 +59,45 @@ sms8 config set api_key=sk_xxx
 sms8 send +14155550100 "Order #1234 shipped — track at example.com/t/1234"
 ```
 
+#### Route through a specific device or SIM
+
+By default SMS8 picks your primary paired Android. To pin a specific phone or SIM slot:
+
+```bash
+# Specific device
+sms8 send +14155550100 "Hi" --device-id=10700
+
+# Device + SIM 2 (dual-SIM Android)
+sms8 send +14155550100 "Hi" --device-id=10700 --sim-slot=2
+
+# Explicit list (each entry is deviceID or deviceID|simSlot)
+sms8 send +14155550100 "Hi" --devices=10700,10701|0
+
+# Broadcast across all paired devices
+sms8 send +14155550100 "Status update" --option=1
+
+# Broadcast across all SIMs of all paired devices
+sms8 send +14155550100 "Status update" --option=2
+
+# Pick a random device from the resolved list (load-balancing)
+sms8 send +14155550100 "Hi" --random-device
+```
+
+Run `sms8 devices` to see your paired devices and their IDs.
+
 ### Send a verification code (OTP)
 
 ```bash
 sms8 otp send +14155550100
 # → 6-digit code arrives on the user's phone
+```
+
+OTP options (length, expiry, template, routing — all optional):
+
+```bash
+sms8 otp send +14155550100 --length=8 --expires-in=180
+sms8 otp send +14155550100 --template="Your YourApp code: {code}"
+sms8 otp send +14155550100 --device-id=10700 --sim-slot=2
 ```
 
 ### Verify a code
@@ -73,10 +107,24 @@ sms8 otp verify +14155550100 482937
 # → { "verified": true }
 ```
 
+`verify_otp` checks the most-recent unverified code for that phone — no device routing
+needed because the code lives server-side, not on a specific SIM.
+
 ### Block until a code arrives (perfect for tests, automation)
 
+`wait` watches **incoming SMS** on a paired Android and pulls out the verification code.
+Pass the **sender's phone or shortcode** (or part of it):
+
 ```bash
-CODE=$(sms8 otp wait +14155550100 --timeout=120)
+# Wait for any code sent from a Google number
+CODE=$(sms8 otp wait +Google --timeout=180 --contains="Google")
+
+# Wait for a code from a specific E.164 number, only on device 10700
+CODE=$(sms8 otp wait +12025550100 --timeout=120 --device-id=10700)
+
+# 8-digit code only (some banks)
+CODE=$(sms8 otp wait +YourBank --code-min-length=8 --code-max-length=8 --timeout=300)
+
 echo "Got code: $CODE"
 ```
 
@@ -86,12 +134,13 @@ echo "Got code: $CODE"
 sms8 inbox --limit=10
 sms8 inbox --received --limit=20
 sms8 inbox --sent --limit=20
+sms8 inbox --phone=+14155550100   # filter to one conversation
 ```
 
 ### Devices
 
 ```bash
-sms8 devices
+sms8 devices   # shows IDs to use with --device-id
 ```
 
 ### Account / balance

@@ -52,26 +52,59 @@ Node 18 or newer.
 ## Send / verify / wait
 
 ```bash
-# Send a code
-sms-otp-using-myphone send +14155550100
+# Send a code (defaults: 6 digits, 5 min expiry, 5 attempts, 60s resend cooldown)
+sms-otp-using-myphone otp send +14155550100
 
 # Verify a code the user typed in
-sms-otp-using-myphone verify +14155550100 482937
+sms-otp-using-myphone otp verify +14155550100 482937
 # → { "verified": true }
 
-# Block until a code arrives on this phone (handy in tests)
-CODE=$(sms-otp-using-myphone wait +14155550100 --timeout=180)
+# Block until an SMS code arrives on a paired Android (handy in tests)
+# Pass the sender phone (or partial match) — e.g. the bank or Google
+CODE=$(sms-otp-using-myphone otp wait +Google --contains="Google" --timeout=180)
 echo "Got: $CODE"
 ```
+
+> The shorter alias `sms-otp` works for every command shown above
+> (e.g. `sms-otp otp send +1234`).
+
+## OTP send options
+
+Tune length, expiry, template, and attempt limit at send time:
+
+```bash
+sms-otp-using-myphone otp send +14155550100 --length=8 --expires-in=180
+sms-otp-using-myphone otp send +14155550100 --template="Your YourApp code: {code}"
+sms-otp-using-myphone otp send +14155550100 --max-attempts=3
+```
+
+## Route through a specific device or SIM
+
+By default SMS8 sends through your primary paired Android. To pin a specific
+phone or SIM slot (dual-SIM Androids), or to broadcast:
+
+```bash
+sms-otp-using-myphone otp send +14155550100 --device-id=10700
+sms-otp-using-myphone otp send +14155550100 --device-id=10700 --sim-slot=2
+sms-otp-using-myphone otp send +14155550100 --devices=10700,10701|0
+sms-otp-using-myphone otp send +14155550100 --option=1     # broadcast all devices
+sms-otp-using-myphone otp send +14155550100 --option=2     # broadcast all SIMs
+sms-otp-using-myphone otp send +14155550100 --random-device
+```
+
+The same routing flags work on `otp wait` (which Android device & SIM should watch
+for the incoming code). Run `sms-otp-using-myphone devices` to list device IDs.
+
+`otp verify` does not take routing flags — the code lives server-side, not on a SIM.
 
 ## Example: end-to-end login flow
 
 ```bash
 #!/usr/bin/env bash
 read -p "Phone (E.164): " PHONE
-sms-otp-using-myphone send "$PHONE"
+sms-otp-using-myphone otp send "$PHONE"
 read -p "Code: " CODE
-if sms-otp-using-myphone verify "$PHONE" "$CODE" | grep -q '"verified": true'; then
+if sms-otp-using-myphone otp verify "$PHONE" "$CODE" | grep -q '"verified": true'; then
   echo "Welcome!"
 else
   echo "Wrong code. Try again."
