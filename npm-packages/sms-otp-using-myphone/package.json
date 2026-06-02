@@ -1,0 +1,47 @@
+{
+  "name": "sms-otp-using-myphone",
+  "version": "1.0.0",
+  "description": "Send and verify SMS OTP codes using your own phone — no Twilio, no per-message fees. Free CLI for 2FA, phone verification, and login flows. Wraps the SMS8 platform.",
+  "type": "module",
+  "bin": {
+    "sms-otp-using-myphone": "bin/sms8.js",
+    "sms-otp": "bin/sms8.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "sms-otp",
+    "otp",
+    "otp-cli",
+    "send-otp",
+    "verify-otp",
+    "phone-verification",
+    "2fa",
+    "two-factor",
+    "two-factor-authentication",
+    "verification-code",
+    "sms-2fa",
+    "otp-from-phone",
+    "otp-without-twilio",
+    "sms-otp-android",
+    "android-otp",
+    "sms8"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/sms-otp-using-myphone"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io/sms-otp-verification-api-android",
+  "author": "SMS8.io",
+  "license": "MIT"
+}

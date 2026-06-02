@@ -46,6 +46,42 @@ All tools share the same send pipeline as the SMS8 dashboard. Credits, retries, 
 | OTP verification built-in | Yes | Extra service | Extra service |
 | Open-source MCP code | MIT | No | No |
 
+## Install via npm
+
+Five packages cover every flow. All published as `latest@1.0.0`, all share one codebase, one API key, one paired Android phone. Pick whichever name fits your project.
+
+| Package | Run command | Use case |
+|---|---|---|
+| [`sms8-mcp`](https://www.npmjs.com/package/sms8-mcp) | `npx -y sms8-mcp` | MCP launcher for Claude Code, Cursor, Windsurf, OpenCode |
+| [`sms8-cli`](https://www.npmjs.com/package/sms8-cli) | `npx sms8-cli send +1234 "hi"` | Terminal CLI for send / OTP / inbox / devices |
+| [`sms-otp-using-myphone`](https://www.npmjs.com/package/sms-otp-using-myphone) | `npx sms-otp-using-myphone send +1234` | OTP-only brand of the same CLI |
+| [`phone-sms-gateway`](https://www.npmjs.com/package/phone-sms-gateway) | `npx phone-sms-gateway send +1234 "hi"` | Phone-as-gateway brand of the same CLI |
+| [`send-sms-from-android`](https://www.npmjs.com/package/send-sms-from-android) | `npx send-sms-from-android send +1234 "hi"` | Android-first brand of the same CLI |
+
+MCP example (Claude Code, Cursor, Windsurf — same config shape):
+
+```json
+{
+  "mcpServers": {
+    "sms8": {
+      "command": "npx",
+      "args": ["-y", "sms8-mcp"],
+      "env": { "SMS8_API_KEY": "sk_xxx" }
+    }
+  }
+}
+```
+
+CLI example:
+
+```bash
+export SMS8_API_KEY=sk_xxx
+npx sms8-cli send +14155550100 "Hello"
+CODE=$(npx sms8-cli otp wait +14155550100 --timeout=120)
+```
+
+Source for all five packages lives in [`npm-packages/`](./npm-packages).
+
 ## Quick start
 
 ### 1. Get an SMS8 account
@@ -232,10 +268,12 @@ For full security details see the FAQ section above. A separate security audit s
 ├── .claude-plugin/plugin.json      Claude Code plugin manifest
 ├── .mcp.json                       MCP server config referenced by the plugin
 ├── skills/send-sms/SKILL.md        teaches Claude when to invoke SMS8 tools
-├── npm/                            @sms8/mcp stdio bridge for stdio clients
-│   ├── package.json
-│   ├── bin/sms8-mcp.js
-│   └── README.md
+├── npm-packages/                   five published npm packages
+│   ├── sms8-mcp/                   MCP stdio bridge (sms8-mcp)
+│   ├── sms8-cli/                   universal CLI (sms8)
+│   ├── sms-otp-using-myphone/      OTP-only brand of the CLI
+│   ├── phone-sms-gateway/          phone-as-gateway brand of the CLI
+│   └── send-sms-from-android/      Android-first brand of the CLI
 ├── lib/                            Auth, JsonRpc, ToolRegistry
 ├── tools/                          7 tool implementations
 └── examples/                       PHP and JS drop-in samples
@@ -245,7 +283,7 @@ For full security details see the FAQ section above. A separate security audit s
 
 * [x] HTTP MCP server live at `mcp.sms8.io`
 * [x] OTP endpoints with per-phone abuse cap
-* [x] npm package `@sms8/mcp` for stdio clients
+* [x] npm packages `sms8-mcp`, `sms8-cli`, `sms-otp-using-myphone`, `phone-sms-gateway`, `send-sms-from-android`
 * [x] Claude Code plugin and Skill
 * [ ] MMS support
 * [ ] Inbound SMS auto-routed to AI for reply generation

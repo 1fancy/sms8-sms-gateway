@@ -1,0 +1,46 @@
+{
+  "name": "send-sms-from-android",
+  "version": "1.0.0",
+  "description": "Send SMS from Android — free CLI to send SMS, OTP, and verification codes through your own Android phone. No Twilio, no per-message fees, no A2P 10DLC. Wraps the SMS8 platform.",
+  "type": "module",
+  "bin": {
+    "send-sms-from-android": "bin/sms8.js",
+    "send-android-sms": "bin/sms8.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "send-sms-from-android",
+    "send-android-sms",
+    "android-sms",
+    "android-sms-cli",
+    "send-sms-android",
+    "sms-from-android",
+    "android-phone-sms",
+    "android-gateway",
+    "free-sms-gateway",
+    "sms",
+    "otp",
+    "2fa",
+    "verification-code",
+    "twilio-alternative",
+    "sms8"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/send-sms-from-android"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io/android-sms-gateway",
+  "author": "SMS8.io",
+  "license": "MIT"
+}

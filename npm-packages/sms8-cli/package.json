@@ -1,0 +1,49 @@
+{
+  "name": "sms8-cli",
+  "version": "1.0.0",
+  "description": "Free SMS gateway CLI — send SMS and OTP verification codes from your terminal through your own Android phone. No Twilio, no per-message fees, no A2P 10DLC. Built on the SMS8 platform.",
+  "type": "module",
+  "bin": {
+    "sms8": "bin/sms8.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "sms",
+    "sms-cli",
+    "sms-gateway",
+    "sms-from-cli",
+    "send-sms-cli",
+    "otp",
+    "otp-cli",
+    "sms-otp",
+    "two-factor",
+    "2fa",
+    "verification-code",
+    "android-sms",
+    "android-sms-gateway",
+    "phone-sms-gateway",
+    "sms-without-twilio",
+    "twilio-alternative",
+    "sms-api",
+    "bulk-sms-cli",
+    "sms8"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/sms8-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io",
+  "author": "SMS8.io",
+  "license": "MIT"
+}

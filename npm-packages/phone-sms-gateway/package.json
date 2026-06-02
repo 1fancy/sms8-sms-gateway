@@ -1,0 +1,46 @@
+{
+  "name": "phone-sms-gateway",
+  "version": "1.0.0",
+  "description": "Phone SMS gateway — turn your Android phone into a free SMS gateway. Send SMS, OTPs, and verification codes from any CLI or script without Twilio, Vonage, or per-message fees. Wraps the SMS8 platform.",
+  "type": "module",
+  "bin": {
+    "phone-sms-gateway": "bin/sms8.js",
+    "sms-gateway": "bin/sms8.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "phone-sms-gateway",
+    "sms-gateway-phone",
+    "sms-gateway",
+    "phone-gateway",
+    "mobile-sms-gateway",
+    "sms-from-phone",
+    "send-sms-from-phone",
+    "free-sms-gateway",
+    "phone-sms",
+    "sms",
+    "otp",
+    "android",
+    "android-phone-gateway",
+    "twilio-alternative",
+    "sms8"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/phone-sms-gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io",
+  "author": "SMS8.io",
+  "license": "MIT"
+}
