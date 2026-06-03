@@ -54,7 +54,8 @@ Six packages cover every flow — pick whichever fits your project.
 |---|---|---|
 | [`sms8-mcp`](https://www.npmjs.com/package/sms8-mcp) | `npx -y sms8-mcp` | MCP launcher for Claude Code, Cursor, Windsurf, OpenCode |
 | [`sms8-cli`](https://www.npmjs.com/package/sms8-cli) | `npx sms8-cli send +1234 "hi"` | Terminal CLI for send / OTP / inbox / devices |
-| [`react-sms-otp`](https://www.npmjs.com/package/react-sms-otp) | `npm i react-sms-otp` | React `useSms8Otp()` + `<OtpForm />` + `<OtpInput />` |
+| [`react-sms-otp`](https://www.npmjs.com/package/react-sms-otp) | `npm i react-sms-otp` | React `useSms8Otp()` + `<OtpForm />` + `<OtpInput />` (separators, RTL, mask, render props) |
+| [`sms-otp-verify`](https://www.npmjs.com/package/sms-otp-verify) | `npm i sms-otp-verify` | Same code, SEO-targeted name for "sms otp verify" / "otp input" searches |
 | [`sms-otp-using-myphone`](https://www.npmjs.com/package/sms-otp-using-myphone) | `npx sms-otp-using-myphone send +1234` | OTP-only brand of the same CLI |
 | [`phone-sms-gateway`](https://www.npmjs.com/package/phone-sms-gateway) | `npx phone-sms-gateway send +1234 "hi"` | Phone-as-gateway brand of the same CLI |
 | [`send-sms-from-android`](https://www.npmjs.com/package/send-sms-from-android) | `npx send-sms-from-android send +1234 "hi"` | Android-first brand of the same CLI |

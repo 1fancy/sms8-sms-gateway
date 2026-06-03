@@ -1,7 +1,7 @@
 {
-  "name": "react-sms-otp",
-  "version": "1.1.0",
-  "description": "React SMS OTP — Twilio alternative for developers. Send + verify OTP codes from React, plus a polished <OtpInput /> ready-to-use UI (separators, RTL, mask, render props, error states). Drop-in <OtpForm /> for full phone-verification flow. useSms8Otp() hook for custom UIs. No Twilio, no Vonage Verify, no per-OTP fees, no markups. Free 5-day trial at sms8.io.",
+  "name": "sms-otp-verify",
+  "version": "1.0.0",
+  "description": "SMS OTP verify for React — Twilio Verify alternative. Send, verify, and auto-fill SMS OTP codes with a ready-to-use <OtpInput /> UI (separators, RTL, mask, render props, error states), <OtpForm /> drop-in, useSms8Otp() hook, and a server-side Sms8Otp class. No Twilio, no per-OTP fees, no markups. Free 5-day trial at sms8.io.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -22,30 +22,29 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react"
   },
   "keywords": [
-    "react",
-    "react-otp",
-    "react-sms-otp",
-    "react-otp-input",
-    "react-otp-verify",
     "sms-otp-verify",
-    "sms-otp-react",
+    "sms-otp",
+    "sms-verify",
+    "otp-verify",
+    "verify-otp",
+    "send-otp",
+    "verify-sms",
+    "phone-verify",
+    "phone-verification",
+    "react-sms-otp",
+    "react-otp-verify",
+    "react-otp-input",
+    "react-otp",
+    "react-2fa",
+    "react-2fa-input",
     "otp-input",
     "otp-input-react",
     "otp-input-ui",
     "otp-component",
     "otp-ui",
-    "react-2fa",
-    "react-2fa-input",
-    "react-phone-verification",
-    "react-hook-otp",
-    "react-component-otp",
-    "useotp",
     "use-otp",
+    "useotp",
     "use-sms-otp",
-    "sms-otp",
-    "send-otp",
-    "verify-otp",
-    "phone-verification",
     "2fa",
     "two-factor",
     "two-factor-authentication",
@@ -55,7 +54,6 @@
     "messagebird-verify-alternative",
     "sms-without-twilio",
     "android-sms-gateway",
-    "sms-gateway-react",
     "sms8"
   ],
   "peerDependencies": {
@@ -67,7 +65,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
-    "directory": "npm-packages/react-sms-otp"
+    "directory": "npm-packages/sms-otp-verify"
   },
   "bugs": {
     "url": "https://github.com/1fancy/sms8-sms-gateway/issues"

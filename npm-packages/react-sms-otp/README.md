@@ -144,9 +144,27 @@ Status values: `idle | sending | sent | verifying | verified | error`.
 />
 ```
 
-### `<OtpInput />` six-box code field (standalone)
+### `<OtpInput />` ready-to-use OTP input UI
 
-Use this even if you already have your own send/verify flow. Handles paste, backspace, arrow nav, autoComplete=`one-time-code`.
+A polished N-box OTP input you can drop into **any** auth flow — even if you
+already have your own send/verify logic with Twilio, Auth0, Supabase, or Clerk.
+Use it standalone as a pure UI component.
+
+**Features at parity with [react-otp-input](https://www.npmjs.com/package/react-otp-input) and more:**
+
+- **Auto-fill** — `inputMode="numeric"` + `autoComplete="one-time-code"` triggers iOS "From Messages" suggestion
+- **Paste** — pasting a 6-digit code anywhere fills all boxes
+- **Keyboard nav** — Backspace, Arrow keys, Home/End, Delete all work
+- **Custom separators** — `<OtpInput renderSeparator={(i) => i === 2 ? <span>-</span> : null} />`
+- **RTL layout** — `rtl` prop swaps direction for Arabic / Hebrew
+- **Mask mode** — `mask` shows `•` instead of digits (useful in shared screens)
+- **Error states** — `error` prop adds red border, sets `aria-invalid`
+- **Render-prop** — full control with `renderInput={(props, state) => ...}`
+- **Styled variants** — `inputClassName`, `focusedClassName`, `filledClassName`, `errorClassName`
+- **Accessible** — `aria-label` per box, `role="group"` on container
+- **TypeScript-strict** with `OtpInputState`, `OtpInputProps`, `OtpRenderInputProps` types
+
+Basic usage:
 
 ```tsx
 import { OtpInput } from 'react-sms-otp';
@@ -156,7 +174,72 @@ import { OtpInput } from 'react-sms-otp';
   value={code}
   onChange={setCode}
   onComplete={(c) => submitVerify(c)}
-  autoFocus
+/>
+```
+
+With separator (e.g. `123-456` style):
+
+```tsx
+<OtpInput
+  length={6}
+  value={code}
+  onChange={setCode}
+  renderSeparator={(i) => i === 2 ? <span style={{margin:'0 4px'}}>—</span> : null}
+/>
+```
+
+Masked / hidden code:
+
+```tsx
+<OtpInput length={6} value={code} onChange={setCode} mask />
+```
+
+RTL (Arabic, Hebrew):
+
+```tsx
+<OtpInput length={6} value={code} onChange={setCode} rtl />
+```
+
+Error state:
+
+```tsx
+<OtpInput length={6} value={code} onChange={setCode} error={!!verifyError} />
+```
+
+Full custom render with Tailwind / shadcn:
+
+```tsx
+<OtpInput
+  length={6}
+  value={code}
+  onChange={setCode}
+  renderInput={(props, { focused, error }) => (
+    <input
+      {...props}
+      className={`
+        w-12 h-14 text-center text-xl font-bold border-2 rounded-lg
+        ${focused ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'}
+        ${error   ? 'border-red-500 bg-red-50' : ''}
+      `}
+    />
+  )}
+/>
+```
+
+Works with **your own send/verify** — drop it into a Clerk, Auth0, Supabase, or
+custom-backed OTP flow:
+
+```tsx
+const [code, setCode] = useState('');
+
+<OtpInput
+  length={6}
+  value={code}
+  onChange={setCode}
+  onComplete={async (c) => {
+    const ok = await yourBackend.verifyCode(phone, c);
+    if (ok) router.push('/dashboard');
+  }}
 />
 ```
 
