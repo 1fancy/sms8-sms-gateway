@@ -1,0 +1,97 @@
+{
+  "name": "capacitor-sms-otp-send-verify",
+  "version": "1.0.0",
+  "description": "Capacitor plugin to send SMS and send/verify OTP codes from iOS and Android — a free Twilio Verify alternative. Routes through your own paired Android phone via SMS8. Native iOS Swift + Android Kotlin bridges with web fallback. No per-OTP fees, no markups. Free 5-day trial at sms8.io.",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "ios/Tests",
+    "Package.swift",
+    "CapacitorSmsOtpSendVerify.podspec"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run tsc && rollup -c rollup.config.js",
+    "clean": "rimraf ./dist",
+    "tsc": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "capacitor",
+    "capacitor-plugin",
+    "capacitor-sms",
+    "capacitor-otp",
+    "capacitor-sms-otp",
+    "capacitor-2fa",
+    "capacitor-phone-verification",
+    "ionic",
+    "ionic-sms",
+    "ionic-otp",
+    "ionic-2fa",
+    "ionic-phone-verification",
+    "ios",
+    "ios-sms",
+    "ios-otp",
+    "ios-sms-otp",
+    "ios-swift-sms",
+    "swift",
+    "swift-sms",
+    "swift-otp",
+    "android",
+    "android-sms",
+    "android-otp",
+    "send-sms",
+    "send-otp",
+    "verify-otp",
+    "sms-verify",
+    "phone-verification",
+    "2fa",
+    "two-factor",
+    "two-factor-authentication",
+    "twilio-alternative",
+    "twilio-verify-alternative",
+    "vonage-verify-alternative",
+    "messagebird-verify-alternative",
+    "sms-without-twilio",
+    "sms8"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^5.0.0",
+    "@capacitor/core": "^5.0.0",
+    "@capacitor/docgen": "^0.2.0",
+    "@capacitor/ios": "^5.0.0",
+    "rimraf": "^5.0.0",
+    "rollup": "^4.0.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/capacitor-sms-otp-send-verify"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io/sms-otp-verification-api-android",
+  "author": "SMS8.io",
+  "license": "MIT",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
+}

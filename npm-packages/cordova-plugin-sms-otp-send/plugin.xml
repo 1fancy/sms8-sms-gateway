@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-sms-otp-send"
+        version="1.0.0">
+
+    <name>SmsOtp</name>
+    <description>
+        Cordova plugin to send SMS and send/verify OTP codes from iOS and Android.
+        A free Twilio Verify alternative. Routes through your own paired Android
+        phone via the SMS8 platform. Native iOS Swift + Android Kotlin bridges.
+        Free 5-day trial at https://sms8.io
+    </description>
+    <author>SMS8.io</author>
+    <license>MIT</license>
+    <keywords>cordova,sms,otp,verify,2fa,phone-verification,ios,android,twilio-alternative,sms8</keywords>
+
+    <engines>
+        <engine name="cordova" version=">=10.0.0" />
+    </engines>
+
+    <js-module src="www/SmsOtp.js" name="SmsOtp">
+        <clobbers target="SmsOtp" />
+    </js-module>
+
+    <!-- iOS -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="SmsOtp">
+                <param name="ios-package" value="SmsOtp" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+        <source-file src="src/ios/SmsOtp.swift" />
+    </platform>
+
+    <!-- Android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="SmsOtp">
+                <param name="android-package" value="io.sms8.cordova.SmsOtp" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.INTERNET" />
+        </config-file>
+        <source-file src="src/android/SmsOtp.kt" target-dir="src/io/sms8/cordova" />
+        <preference name="GradlePluginKotlinEnabled" value="true" />
+        <preference name="GradlePluginKotlinVersion" value="1.9.22" />
+    </platform>
+</plugin>

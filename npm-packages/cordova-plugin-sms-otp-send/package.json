@@ -1,0 +1,75 @@
+{
+  "name": "cordova-plugin-sms-otp-send",
+  "version": "1.0.0",
+  "description": "Cordova plugin to send SMS and send/verify OTP codes from iOS and Android — a free Twilio Verify alternative. Routes through your own paired Android phone via SMS8. Native iOS Swift + Android Kotlin bridges. No per-OTP fees, no markups. Free 5-day trial at sms8.io.",
+  "main": "www/SmsOtp.js",
+  "files": [
+    "plugin.xml",
+    "www/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "cordova": {
+    "id": "cordova-plugin-sms-otp-send",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova",
+    "cordova-plugin",
+    "cordova-sms",
+    "cordova-otp",
+    "cordova-sms-otp",
+    "cordova-2fa",
+    "cordova-phone-verification",
+    "ionic",
+    "ionic-sms",
+    "ionic-otp",
+    "ios",
+    "ios-sms",
+    "ios-otp",
+    "ios-sms-otp",
+    "ios-swift-sms",
+    "swift",
+    "swift-sms",
+    "swift-otp",
+    "android",
+    "android-sms",
+    "android-otp",
+    "send-sms",
+    "send-otp",
+    "verify-otp",
+    "sms-verify",
+    "phone-verification",
+    "2fa",
+    "two-factor",
+    "two-factor-authentication",
+    "twilio-alternative",
+    "twilio-verify-alternative",
+    "vonage-verify-alternative",
+    "sms-without-twilio",
+    "sms8"
+  ],
+  "engines": {
+    "cordovaDependencies": {
+      "10.0.0": {
+        "cordova": ">=10"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/cordova-plugin-sms-otp-send"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io/sms-otp-verification-api-android",
+  "author": "SMS8.io",
+  "license": "MIT"
+}
