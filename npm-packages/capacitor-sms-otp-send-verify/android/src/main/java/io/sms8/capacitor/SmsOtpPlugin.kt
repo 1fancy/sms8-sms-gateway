@@ -94,6 +94,50 @@ class SmsOtpPlugin : Plugin() {
         } }
     }
 
+    @PluginMethod
+    fun listDevices(call: PluginCall) {
+        scope.launch { mcpCall("list_devices", JSONObject(), call) { json ->
+            JSObject().apply {
+                put("success", json.optBoolean("success", false))
+                put("count",   json.optInt("count", 0))
+                put("devices", json.opt("devices") ?: org.json.JSONArray())
+                put("error",   json.opt("error"))
+            }
+        } }
+    }
+
+    @PluginMethod
+    fun getMessages(call: PluginCall) {
+        val args = JSONObject().apply {
+            put("direction", call.getString("direction") ?: "all")
+            put("limit",     call.getInt("limit") ?: 25)
+            call.getString("phone")?.let { put("phone", it) }
+        }
+        scope.launch { mcpCall("get_messages", args, call) { json ->
+            JSObject().apply {
+                put("success",  json.optBoolean("success", false))
+                put("count",    json.optInt("count", 0))
+                put("messages", json.opt("messages") ?: org.json.JSONArray())
+                put("error",    json.opt("error"))
+            }
+        } }
+    }
+
+    @PluginMethod
+    fun getBalance(call: PluginCall) {
+        scope.launch { mcpCall("get_balance", JSONObject(), call) { json ->
+            JSObject().apply {
+                put("success",   json.optBoolean("success", false))
+                put("credits",   json.opt("credits"))
+                put("unlimited", json.optBoolean("unlimited", false))
+                put("expiresAt", json.opt("expires_at"))
+                put("daysLeft",  json.opt("days_left"))
+                put("summary",   json.opt("summary"))
+                put("error",     json.opt("error"))
+            }
+        } }
+    }
+
     private fun mcpCall(tool: String, args: JSONObject, call: PluginCall, map: (JSONObject) -> JSObject) {
         val key = apiKey
         if (key == null) {

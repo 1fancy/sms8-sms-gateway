@@ -8,6 +8,10 @@ import type {
   SendResult,
   SendOtpResult,
   VerifyOtpResult,
+  ListDevicesResult,
+  GetMessagesOptions,
+  GetMessagesResult,
+  GetBalanceResult,
 } from './definitions';
 
 /**
@@ -64,6 +68,44 @@ export class SmsOtpWeb extends WebPlugin implements SmsOtpPlugin {
       verified:     r?.verified,
       error:        r?.error,
       attemptsLeft: r?.attempts_left,
+    };
+  }
+
+  async listDevices(): Promise<ListDevicesResult> {
+    const r = await this.mcp('list_devices', {});
+    return {
+      success: !!r?.success,
+      count:   r?.count ?? 0,
+      devices: r?.devices ?? [],
+      error:   r?.error,
+    };
+  }
+
+  async getMessages(opts: GetMessagesOptions = {}): Promise<GetMessagesResult> {
+    const args: Record<string, unknown> = {
+      direction: opts.direction ?? 'all',
+      limit:     opts.limit     ?? 25,
+    };
+    if (opts.phone) args.phone = opts.phone;
+    const r = await this.mcp('get_messages', args);
+    return {
+      success:  !!r?.success,
+      count:    r?.count ?? 0,
+      messages: r?.messages ?? [],
+      error:    r?.error,
+    };
+  }
+
+  async getBalance(): Promise<GetBalanceResult> {
+    const r = await this.mcp('get_balance', {});
+    return {
+      success:   !!r?.success,
+      credits:   r?.credits ?? null,
+      unlimited: !!r?.unlimited,
+      expiresAt: r?.expires_at,
+      daysLeft:  r?.days_left,
+      summary:   r?.summary,
+      error:     r?.error,
     };
   }
 

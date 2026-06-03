@@ -22,11 +22,14 @@ class SmsOtp : CordovaPlugin() {
     override fun execute(action: String, args: JSONArray, callback: CallbackContext): Boolean {
         val opts = if (args.length() > 0) args.optJSONObject(0) ?: JSONObject() else JSONObject()
         when (action) {
-            "configure" -> configure(opts, callback)
-            "sendSms"   -> cordova.threadPool.execute { sendSms(opts, callback) }
-            "sendOtp"   -> cordova.threadPool.execute { sendOtp(opts, callback) }
-            "verifyOtp" -> cordova.threadPool.execute { verifyOtp(opts, callback) }
-            else        -> return false
+            "configure"   -> configure(opts, callback)
+            "sendSms"     -> cordova.threadPool.execute { sendSms(opts, callback) }
+            "sendOtp"     -> cordova.threadPool.execute { sendOtp(opts, callback) }
+            "verifyOtp"   -> cordova.threadPool.execute { verifyOtp(opts, callback) }
+            "listDevices" -> cordova.threadPool.execute { listDevices(callback) }
+            "getMessages" -> cordova.threadPool.execute { getMessages(opts, callback) }
+            "getBalance"  -> cordova.threadPool.execute { getBalance(callback) }
+            else          -> return false
         }
         return true
     }
@@ -102,6 +105,47 @@ class SmsOtp : CordovaPlugin() {
                 put("verified",     json.opt("verified"))
                 put("error",        json.opt("error"))
                 put("attemptsLeft", json.opt("attempts_left"))
+            }
+        }
+    }
+
+    private fun listDevices(callback: CallbackContext) {
+        mcpCall("list_devices", JSONObject(), callback) { json ->
+            JSONObject().apply {
+                put("success", json.optBoolean("success", false))
+                put("count",   json.optInt("count", 0))
+                put("devices", json.opt("devices") ?: org.json.JSONArray())
+                put("error",   json.opt("error"))
+            }
+        }
+    }
+
+    private fun getMessages(opts: JSONObject, callback: CallbackContext) {
+        val args = JSONObject().apply {
+            put("direction", opts.optString("direction").ifEmpty { "all" })
+            put("limit",     if (opts.has("limit")) opts.optInt("limit") else 25)
+            opts.optString("phone").takeIf { it.isNotEmpty() }?.let { put("phone", it) }
+        }
+        mcpCall("get_messages", args, callback) { json ->
+            JSONObject().apply {
+                put("success",  json.optBoolean("success", false))
+                put("count",    json.optInt("count", 0))
+                put("messages", json.opt("messages") ?: org.json.JSONArray())
+                put("error",    json.opt("error"))
+            }
+        }
+    }
+
+    private fun getBalance(callback: CallbackContext) {
+        mcpCall("get_balance", JSONObject(), callback) { json ->
+            JSONObject().apply {
+                put("success",   json.optBoolean("success", false))
+                put("credits",   json.opt("credits"))
+                put("unlimited", json.optBoolean("unlimited", false))
+                put("expiresAt", json.opt("expires_at"))
+                put("daysLeft",  json.opt("days_left"))
+                put("summary",   json.opt("summary"))
+                put("error",     json.opt("error"))
             }
         }
     }

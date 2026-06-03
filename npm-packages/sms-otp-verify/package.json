@@ -1,6 +1,6 @@
 {
   "name": "sms-otp-verify",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SMS OTP verify for React — Twilio Verify alternative. Send, verify, and auto-fill SMS OTP codes with a ready-to-use <OtpInput /> UI (separators, RTL, mask, render props, error states), <OtpForm /> drop-in, useSms8Otp() hook, and a server-side Sms8Otp class. No Twilio, no per-OTP fees, no markups. Free 5-day trial at sms8.io.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

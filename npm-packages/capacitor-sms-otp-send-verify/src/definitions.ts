@@ -65,6 +65,59 @@ export interface VerifyOtpResult {
   attemptsLeft?: number;
 }
 
+export interface DeviceInfo {
+  id: number;
+  name: string | null;
+  model: string | null;
+  androidVersion: string | null;
+  appVersion: string | null;
+  enabled: boolean;
+  primary: boolean;
+}
+
+export interface ListDevicesResult {
+  success: boolean;
+  count: number;
+  devices: DeviceInfo[];
+  error?: string;
+}
+
+export interface GetMessagesOptions {
+  /** "all" | "received" | "sent". Default "all". */
+  direction?: 'all' | 'received' | 'sent';
+  /** Max rows (1-100). Default 25. */
+  limit?: number;
+  /** Filter to one phone (E.164). */
+  phone?: string;
+}
+
+export interface MessageRecord {
+  ID: number;
+  number: string;
+  message: string;
+  status: string;
+  sentDate: string;
+  deliveredDate: string;
+  type: string;
+}
+
+export interface GetMessagesResult {
+  success: boolean;
+  count: number;
+  messages: MessageRecord[];
+  error?: string;
+}
+
+export interface GetBalanceResult {
+  success: boolean;
+  credits: number | null;
+  unlimited: boolean;
+  expiresAt?: string | null;
+  daysLeft?: number | null;
+  summary?: string;
+  error?: string;
+}
+
 export interface SmsOtpPlugin {
   /** Set the API key + base URL once before any other call. */
   configure(options: ConfigureOptions): Promise<void>;
@@ -77,4 +130,13 @@ export interface SmsOtpPlugin {
 
   /** Verify the code the user typed. */
   verifyOtp(options: VerifyOtpOptions): Promise<VerifyOtpResult>;
+
+  /** List paired Android devices and their IDs. */
+  listDevices(): Promise<ListDevicesResult>;
+
+  /** Fetch recent SMS messages (inbox + sent). */
+  getMessages(options?: GetMessagesOptions): Promise<GetMessagesResult>;
+
+  /** Account credit + expiry summary. */
+  getBalance(): Promise<GetBalanceResult>;
 }

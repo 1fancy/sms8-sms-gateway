@@ -20,11 +20,17 @@ function call(action, args) {
 
 module.exports = {
   /** Set the API key once before any send/verify call. */
-  configure: function (options) { return call('configure', options); },
+  configure:   function (options) { return call('configure',   options); },
   /** Send a plain SMS through your paired Android phone. */
-  sendSms:   function (options) { return call('sendSms',   options); },
+  sendSms:     function (options) { return call('sendSms',     options); },
   /** Send a verification code. */
-  sendOtp:   function (options) { return call('sendOtp',   options); },
+  sendOtp:     function (options) { return call('sendOtp',     options); },
   /** Verify the code the user typed. */
-  verifyOtp: function (options) { return call('verifyOtp', options); },
+  verifyOtp:   function (options) { return call('verifyOtp',   options); },
+  /** List paired Android devices and their IDs. */
+  listDevices: function ()        { return call('listDevices', {}); },
+  /** Fetch recent SMS messages (inbox + sent). */
+  getMessages: function (options) { return call('getMessages', options); },
+  /** Account credit + expiry summary. */
+  getBalance:  function ()        { return call('getBalance',  {}); },
 };

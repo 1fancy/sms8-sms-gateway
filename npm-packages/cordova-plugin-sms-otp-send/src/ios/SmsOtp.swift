@@ -80,6 +80,51 @@ class SmsOtp: CDVPlugin {
         }
     }
 
+    @objc(listDevices:)
+    func listDevices(_ command: CDVInvokedUrlCommand) {
+        mcpCall(tool: "list_devices", args: [:], command: command) { json in
+            return [
+                "success": (json["success"] as? Bool) ?? false,
+                "count":   json["count"]   ?? 0,
+                "devices": json["devices"] ?? [],
+                "error":   json["error"]   ?? NSNull(),
+            ]
+        }
+    }
+
+    @objc(getMessages:)
+    func getMessages(_ command: CDVInvokedUrlCommand) {
+        let o = (command.arguments.first as? [String: Any]) ?? [:]
+        var args: [String: Any] = [
+            "direction": (o["direction"] as? String) ?? "all",
+            "limit":     (o["limit"]     as? Int)    ?? 25
+        ]
+        if let p = o["phone"] as? String { args["phone"] = p }
+        mcpCall(tool: "get_messages", args: args, command: command) { json in
+            return [
+                "success":  (json["success"]  as? Bool) ?? false,
+                "count":    json["count"]    ?? 0,
+                "messages": json["messages"] ?? [],
+                "error":    json["error"]    ?? NSNull(),
+            ]
+        }
+    }
+
+    @objc(getBalance:)
+    func getBalance(_ command: CDVInvokedUrlCommand) {
+        mcpCall(tool: "get_balance", args: [:], command: command) { json in
+            return [
+                "success":   (json["success"] as? Bool) ?? false,
+                "credits":   json["credits"]    ?? NSNull(),
+                "unlimited": (json["unlimited"] as? Bool) ?? false,
+                "expiresAt": json["expires_at"] ?? NSNull(),
+                "daysLeft":  json["days_left"]  ?? NSNull(),
+                "summary":   json["summary"]    ?? NSNull(),
+                "error":     json["error"]      ?? NSNull(),
+            ]
+        }
+    }
+
     // MARK: - Internal
 
     private func mcpCall(

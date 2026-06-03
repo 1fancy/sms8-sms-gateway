@@ -14,10 +14,13 @@ public class SmsOtpPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SmsOtpPlugin"
     public let jsName = "SmsOtp"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "configure",  returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "sendSms",    returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "sendOtp",    returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "verifyOtp",  returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "configure",    returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendSms",      returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendOtp",      returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "verifyOtp",    returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "listDevices",  returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getMessages",  returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getBalance",   returnType: CAPPluginReturnPromise),
     ]
 
     private var apiKey: String?
@@ -81,6 +84,47 @@ public class SmsOtpPlugin: CAPPlugin, CAPBridgedPlugin {
                 "verified":     json["verified"]      as Any,
                 "error":        json["error"]         as Any,
                 "attemptsLeft": json["attempts_left"] as Any,
+            ]
+        }
+    }
+
+    @objc func listDevices(_ call: CAPPluginCall) {
+        mcpCall(tool: "list_devices", args: [:], call: call) { json in
+            return [
+                "success": (json["success"] as? Bool) ?? false,
+                "count":   json["count"]   ?? 0,
+                "devices": json["devices"] ?? [],
+                "error":   json["error"]   as Any,
+            ]
+        }
+    }
+
+    @objc func getMessages(_ call: CAPPluginCall) {
+        var args: [String: Any] = [
+            "direction": call.getString("direction") ?? "all",
+            "limit":     call.getInt("limit") ?? 25
+        ]
+        if let p = call.getString("phone") { args["phone"] = p }
+        mcpCall(tool: "get_messages", args: args, call: call) { json in
+            return [
+                "success":  (json["success"]  as? Bool) ?? false,
+                "count":    json["count"]    ?? 0,
+                "messages": json["messages"] ?? [],
+                "error":    json["error"]    as Any,
+            ]
+        }
+    }
+
+    @objc func getBalance(_ call: CAPPluginCall) {
+        mcpCall(tool: "get_balance", args: [:], call: call) { json in
+            return [
+                "success":   (json["success"] as? Bool) ?? false,
+                "credits":   json["credits"]    ?? NSNull(),
+                "unlimited": (json["unlimited"] as? Bool) ?? false,
+                "expiresAt": json["expires_at"] as Any,
+                "daysLeft":  json["days_left"]  as Any,
+                "summary":   json["summary"]    as Any,
+                "error":     json["error"]      as Any,
             ]
         }
     }
