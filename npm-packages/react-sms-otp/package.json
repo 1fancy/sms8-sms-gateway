@@ -1,0 +1,74 @@
+{
+  "name": "react-sms-otp",
+  "version": "1.0.0",
+  "description": "React SMS OTP — Twilio alternative for developers. useSms8Otp() hook + <OtpForm /> + <OtpInput /> drop-in components for phone verification, 2FA, and login flows. Sends and verifies SMS OTP codes through your own Android phone. No Twilio, no per-OTP fees, no markups. Free 5-day trial at sms8.io.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react"
+  },
+  "keywords": [
+    "react",
+    "react-otp",
+    "react-sms-otp",
+    "react-otp-input",
+    "react-2fa",
+    "react-phone-verification",
+    "react-hook-otp",
+    "react-component-otp",
+    "useotp",
+    "use-otp",
+    "use-sms-otp",
+    "otp-input",
+    "otp-component",
+    "sms-otp",
+    "send-otp",
+    "verify-otp",
+    "phone-verification",
+    "2fa",
+    "two-factor",
+    "twilio-alternative",
+    "twilio-verify-alternative",
+    "vonage-verify-alternative",
+    "sms-without-twilio",
+    "android-sms-gateway",
+    "sms8"
+  ],
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1fancy/sms8-sms-gateway.git",
+    "directory": "npm-packages/react-sms-otp"
+  },
+  "bugs": {
+    "url": "https://github.com/1fancy/sms8-sms-gateway/issues"
+  },
+  "homepage": "https://sms8.io/sms-otp-verification-api-android",
+  "author": "SMS8.io",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}

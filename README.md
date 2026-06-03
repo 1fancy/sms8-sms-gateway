@@ -48,12 +48,13 @@ All tools share the same send pipeline as the SMS8 dashboard. Credits, retries, 
 
 ## Install via npm
 
-Five packages cover every flow. All published as `latest@1.0.0`, all share one codebase, one API key, one paired Android phone. Pick whichever name fits your project.
+Six packages cover every flow — pick whichever fits your project.
 
 | Package | Run command | Use case |
 |---|---|---|
 | [`sms8-mcp`](https://www.npmjs.com/package/sms8-mcp) | `npx -y sms8-mcp` | MCP launcher for Claude Code, Cursor, Windsurf, OpenCode |
 | [`sms8-cli`](https://www.npmjs.com/package/sms8-cli) | `npx sms8-cli send +1234 "hi"` | Terminal CLI for send / OTP / inbox / devices |
+| [`react-sms-otp`](https://www.npmjs.com/package/react-sms-otp) | `npm i react-sms-otp` | React `useSms8Otp()` + `<OtpForm />` + `<OtpInput />` |
 | [`sms-otp-using-myphone`](https://www.npmjs.com/package/sms-otp-using-myphone) | `npx sms-otp-using-myphone send +1234` | OTP-only brand of the same CLI |
 | [`phone-sms-gateway`](https://www.npmjs.com/package/phone-sms-gateway) | `npx phone-sms-gateway send +1234 "hi"` | Phone-as-gateway brand of the same CLI |
 | [`send-sms-from-android`](https://www.npmjs.com/package/send-sms-from-android) | `npx send-sms-from-android send +1234 "hi"` | Android-first brand of the same CLI |
@@ -77,10 +78,32 @@ CLI example:
 ```bash
 export SMS8_API_KEY=sk_xxx
 npx sms8-cli send +14155550100 "Hello"
-CODE=$(npx sms8-cli otp wait +14155550100 --timeout=120)
+CODE=$(npx sms8-cli otp wait +Google --timeout=120)
 ```
 
-Source for all five packages lives in [`npm-packages/`](./npm-packages).
+React example:
+
+```tsx
+import { OtpForm } from 'react-sms-otp';
+
+<OtpForm
+  apiKey={process.env.NEXT_PUBLIC_SMS8_API_KEY!}
+  onVerified={(phone) => router.push('/dashboard')}
+/>
+```
+
+Source for all six packages lives in [`npm-packages/`](./npm-packages).
+
+## iOS + Android SDKs
+
+For native mobile apps, the [`sdks/`](./sdks) folder ships Kotlin (Android) and Swift (iOS) SDKs with the **send / verify** API + **SMS auto-fill helpers** (Google SMS Retriever on Android, `oneTimeCode` content type on iOS).
+
+| SDK | Install | Auto-fill |
+|---|---|---|
+| [`sms8-swift`](./sdks/sms8-swift) | Swift Package Manager — see [README](./sdks/sms8-swift/README.md) | iOS `OTPTextField` SwiftUI view |
+| [`sms8-android`](./sdks/sms8-android) | JitPack — see [README](./sdks/sms8-android/README.md) | `SMSRetriever.start(activity)` — no SMS permission needed |
+
+Both SDKs are MIT, share the same SMS8 API key, and target the same Twilio-Verify-alternative use cases.
 
 ## Quick start
 
