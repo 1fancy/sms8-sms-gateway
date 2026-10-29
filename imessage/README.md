@@ -52,6 +52,23 @@ See [`main.swift`](./main.swift) for the full source. It uses:
 - **SMS to Android** needs a hosted Mac with the BlueBubbles bridge. On a local Mac, use the [SMS8 Android app](https://sms8.io/android-sms-gateway) for SMS.
 - **Group chats, voice notes and RCS** are available on the hosted Mac setup.
 
+## SMS8 vs other iMessage APIs
+
+Most iMessage APIs charge 60 to 1,000 USD per line every month, only do iMessage, and run the Mac for you so you never own it. SMS8 is a flat plan, adds Android SMS on the same account, and lets you bring your own Mac.
+
+| | SMS8 Gateway | Sendblue | LoopMessage | Sendara | Blooio |
+|---|---|---|---|---|---|
+| Starting price | **14.50 USD / mo** | ~100 USD / line | ~60 USD / mo | Usage based | Usage based |
+| Send iMessage via API | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Receive replies | ✅ | ✅ | ✅ | ✅ | ✅ |
+| No per-message fee | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Android SMS on same account | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Bring your own Mac | ✅ | ❌ | ✅ | ❌ | ❌ |
+| GoHighLevel native provider | ✅ | ❌ | ❌ | ❌ | ❌ |
+| One inbox for iMessage + SMS | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+A self-hosted **Sendblue alternative**, **LoopMessage alternative**, **Sendara alternative** and **Blooio alternative** that also handles Android SMS. Full comparison: **https://sms8.io/send-imessage-api**
+
 ## Use cases
 
 - GoHighLevel agencies that want blue-bubble iMessage to their Apple contacts
