@@ -28,6 +28,18 @@ enum SendEngine: String, CaseIterable { case thisMac = "This Mac", bluebubbles =
 final class AppState: ObservableObject {
     @Published var paired = false
     @Published var email  = ""
+    // Masked email for on-screen display so a shoulder-surfer or a screen
+    // recording never reveals the full account address. "3anakebnt@gmail.com"
+    // becomes "3a***@gmail.com".
+    var maskedEmail: String {
+        guard let at = email.firstIndex(of: "@") else {
+            return email.isEmpty ? "your account" : email
+        }
+        let user = String(email[..<at])
+        let domain = String(email[at...])
+        let keep = user.count <= 2 ? user : String(user.prefix(2))
+        return keep + "***" + domain
+    }
     @Published var userId = ""
     @Published var receiveEnabled = true               // ON by default -> SMS8 is two-way, so receiving + Full Disk Access are expected
     @Published var sendMode: SendMode = .auto
@@ -1065,7 +1077,7 @@ struct RootView: View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
                 Text(tab.rawValue).font(.system(size: 16, weight: .bold))
-                Text(state.paired ? "Connected — \(state.email)" : "Not connected")
+                Text(state.paired ? "Connected — \(state.maskedEmail)" : "Not connected")
                     .font(.system(size: 12)).foregroundColor(.secondary)
             }
             Spacer()
@@ -1233,7 +1245,7 @@ struct RootView: View {
                             Spacer()
                             Button("Stop") { state.autoStart = false; state.save(); bridge.stop() }.buttonStyle(.bordered).tint(.red)
                         }
-                        Text("Linked as device \(state.deviceId) on \(state.email). Messages queued in SMS8 are delivered here as \(state.sendMode == .sms ? "SMS" : state.sendMode == .imessage ? "iMessage" : "SMS/iMessage"), and \(state.receiveEnabled ? "replies flow back to your inbox." : "receiving is off (send only).")")
+                        Text("Linked as device \(state.deviceId) on \(state.maskedEmail). Messages queued in SMS8 are delivered here as \(state.sendMode == .sms ? "SMS" : state.sendMode == .imessage ? "iMessage" : "SMS/iMessage"), and \(state.receiveEnabled ? "replies flow back to your inbox." : "receiving is off (send only).")")
                             .font(.system(size: 12)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                         HStack(spacing: 14) {
                             liveStat("Last activity", bridge.log.first.map { String($0.prefix(8)) } ?? "—")
@@ -1246,7 +1258,7 @@ struct RootView: View {
                 } else {
                     panel {
                         HStack {
-                            Label("Linked as device \(state.deviceId) — \(state.email)", systemImage: "checkmark.seal.fill")
+                            Label("Linked as device \(state.deviceId) — \(state.maskedEmail)", systemImage: "checkmark.seal.fill")
                                 .font(.system(size: 13, weight: .semibold)).foregroundColor(.green)
                             Spacer()
                             Button("Disconnect") { state.paired = false; state.save(); bridge.stop() }
@@ -1275,7 +1287,7 @@ struct RootView: View {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 30))
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Connected!").font(.system(size: 16, weight: .bold))
-                            Text("Linked as \(state.email.isEmpty ? "your account" : state.email) — taking you to the next step…")
+                            Text("Linked as \(state.maskedEmail) — taking you to the next step…")
                                 .font(.system(size: 12)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
