@@ -703,7 +703,14 @@ final class Bridge: ObservableObject {
     }
 
     private func receiveTick() {
-        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        // Send ISO-8601 WITH an explicit UTC-offset (e.g. 2026-10-30T18:24:37+0000)
+        // so the server never has to guess the timezone. The old format was a
+        // naive "yyyy-MM-dd HH:mm:ss" with no offset, which the server parsed in
+        // its own TIMEZONE (Africa/Casablanca) even though the string was the
+        // Mac's local wall-clock — producing the ±1h skew on received messages.
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"   // Z = numeric offset like +0000
         func forward(number: String, text: String, sentTs: TimeInterval) {
             let payload = [["number":number,"message":text,
                 "sentDate":fmt.string(from: Date(timeIntervalSince1970: sentTs)),
