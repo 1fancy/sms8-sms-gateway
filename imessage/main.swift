@@ -372,18 +372,36 @@ enum iMsg {
         var db: OpaquePointer?
         guard sqlite3_open_v2(CHAT_DB, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else { return nil }
         defer { sqlite3_close(db) }
-        // Match on the tail of the handle so "+212627316921" matches stored
-        // "+212627316921" regardless of exact formatting Messages normalises to.
-        let tail = String(to.filter { $0.isNumber }.suffix(8))
-        let sql = """
-        SELECT m.ROWID, m.error
-        FROM message m JOIN handle h ON m.handle_id=h.ROWID
-        WHERE m.is_from_me=1 AND replace(replace(replace(h.id,' ',''),'-',''),'(','') LIKE ?
-        ORDER BY m.ROWID DESC LIMIT 1;
-        """
+
+        // Email handles (iMessage to an Apple email) vs phone numbers need
+        // different matching. For an email, match the handle case-insensitively.
+        // For a phone, match on the last 8 digits so "+212627316921" matches
+        // whatever formatting Messages normalised it to. The old code digit-
+        // filtered emails too, turning "saad.lamnabhi01@gmail.com" into "01" —
+        // which matched the wrong row (or none), so an email that actually
+        // DELIVERED was reported as Failed.
+        let sql: String
+        let bindValue: String
+        if to.contains("@") {
+            sql = """
+            SELECT m.ROWID, m.error
+            FROM message m JOIN handle h ON m.handle_id=h.ROWID
+            WHERE m.is_from_me=1 AND LOWER(h.id) = LOWER(?)
+            ORDER BY m.ROWID DESC LIMIT 1;
+            """
+            bindValue = to
+        } else {
+            sql = """
+            SELECT m.ROWID, m.error
+            FROM message m JOIN handle h ON m.handle_id=h.ROWID
+            WHERE m.is_from_me=1 AND replace(replace(replace(h.id,' ',''),'-',''),'(','') LIKE ?
+            ORDER BY m.ROWID DESC LIMIT 1;
+            """
+            bindValue = "%" + String(to.filter { $0.isNumber }.suffix(8))
+        }
         var st: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &st, nil) == SQLITE_OK else { return nil }
-        sqlite3_bind_text(st, 1, "%\(tail)", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_text(st, 1, bindValue, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
         defer { sqlite3_finalize(st) }
         if sqlite3_step(st) == SQLITE_ROW {
             return (sqlite3_column_int64(st, 0), Int(sqlite3_column_int(st, 1)))
