@@ -175,7 +175,7 @@ enum iMsg {
     /// Send via a specific Messages service type ("iMessage" or "SMS").
     /// Uses the concrete service id so SMS is actually forced (not silently
     /// re-routed), then VERIFIES against chat.db that the row was really sent.
-    private static func sendVia(_ service: String, to: String, body: String) -> (Bool, String) {
+    private static func sendVia(_ service: String, to: String, body: String, verifySteps: Int = 8) -> (Bool, String) {
         let esc = body.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
         guard let sid = serviceId(service) else { return (false, "no \(service) service on this Mac") }
         let before = lastSentRowId(to: to)
@@ -195,8 +195,13 @@ enum iMsg {
         // Verify: a NEW outgoing row to this recipient must appear with error=0.
         // AppleScript returns "ok" even when the message never queues, so we
         // confirm it actually landed in the Messages DB before reporting Sent.
+        //
+        // For iMessage to a NON-Apple number, Messages first creates the row,
+        // then a few seconds later flips `error` to a non-zero "not iMessage"
+        // code. So we poll long enough (verifySteps * 0.5s) for that late error
+        // to surface — otherwise auto-fallback to SMS would never trigger.
         if canReadDB() {
-            for _ in 0..<8 {               // up to ~4s for the row to materialise
+            for _ in 0..<verifySteps {
                 usleep(500_000)
                 if let (rid, err) = newestSent(to: to), rid > before {
                     return err == 0 ? (true, "\(service)")
@@ -211,20 +216,86 @@ enum iMsg {
     }
 
     /// Mode-aware send on THIS Mac.
-    /// iMessage -> AppleScript (reliable, Apple recipients).
-    /// SMS      -> GUI-send via Accessibility, because Apple's AppleScript SMS
-    ///             API is effectively dead on modern macOS: `send to buddy of
-    ///             (SMS service)` returns ok but silently routes to the existing
-    ///             iMessage chat, which never reaches Android. Driving the
-    ///             Messages compose window the way a human does is the only
-    ///             method that actually hands an SMS to the iPhone relay.
-    // This Mac sends over iMessage only. (SMS via AppleScript/Accessibility is
-    // unreliable on modern macOS and this Mac exposes no SMS service, so the
-    // "This Mac" engine is iMessage-only; use the Remote Mac engine for SMS.)
+    ///
+    /// iMessage -> send via the concrete iMessage service id (reliable to Apple
+    ///             recipients; DB-verified).
+    /// SMS      -> send via the concrete SMS service id. This routes through a
+    ///             paired iPhone's SIM via Text Message Forwarding and reaches
+    ///             Android (green bubble). Requires an iPhone paired to this Mac
+    ///             with Text Message Forwarding ON; a Mac with no SMS service
+    ///             (no paired iPhone) returns "no SMS service on this Mac".
+    /// auto     -> try iMessage; if chat.db shows the iMessage row errored (or no
+    ///             row was created), resend over SMS. Apple's `send` never throws
+    ///             on iMessage failure, but the failure IS recorded in chat.db, so
+    ///             the fallback is driven off the verified DB row — not off a
+    ///             thrown error (which never comes).
     @discardableResult
     static func send(to: String, body: String, mode: SendMode = .auto) -> (Bool, String) {
-        let (ok, info) = sendVia("iMessage", to: to, body: body)
-        return ok ? (true, "iMessage") : (false, info)
+        switch mode {
+        case .imessage:
+            let (ok, info) = sendVia("iMessage", to: to, body: body)
+            return ok ? (true, "iMessage") : (false, info)
+
+        case .sms:
+            let (ok, info) = sendVia("SMS", to: to, body: body)
+            return ok ? (true, "SMS") : (false, info)
+
+        case .auto:
+            // An email handle can only be iMessage (SMS has no email concept),
+            // so there is nothing to fall back to — send iMessage and report.
+            if to.contains("@") {
+                let (ok, info) = sendVia("iMessage", to: to, body: body)
+                return ok ? (true, "iMessage") : (false, info)
+            }
+            // 1) Try iMessage. Use a LONGER verification window than a plain
+            //    iMessage-only send: when the recipient is NOT on iMessage,
+            //    Messages creates the row first and flips `error` non-zero a few
+            //    seconds later. We must wait for that so the fallback fires.
+            //    (~7s)
+            let (iok, iinfo) = sendVia("iMessage", to: to, body: body, verifySteps: 14)
+            if iok { return (true, "iMessage") }
+            // If we could NOT read chat.db, sendVia returned success-unverified
+            // above (so iok would be true) — reaching here with FDA off only
+            // happens on a hard AppleScript error, which SMS can also hit. Still
+            // worth trying SMS.
+            // 2) iMessage failed (recipient not on iMessage, or row errored).
+            //    Auto-fall back to SMS via the paired iPhone — the ONE path that
+            //    reaches Android. Requires an SMS service (paired iPhone + TMF).
+            if serviceId("SMS") == nil {
+                return (false, "iMessage failed and no SMS fallback available (pair an iPhone with Text Message Forwarding on this Mac to send SMS). \(iinfo)")
+            }
+            let (sok, sinfo) = sendVia("SMS", to: to, body: body)
+            return sok ? (true, "SMS (iMessage unavailable)") : (false, "iMessage and SMS both failed. \(sinfo)")
+        }
+    }
+
+    /// Send into an EXISTING group chat by its chat.db GUID (e.g.
+    /// "iMessage;+;chat1234..."). Native AppleScript CANNOT create a group, but
+    /// it CAN send into one that already exists and is loaded in Messages. The
+    /// server supplies the chat GUID; we address it directly. No DB verification
+    /// here because group iMessages never flip is_delivered on modern macOS, so a
+    /// per-row error check would false-negative — we trust the osascript result.
+    @discardableResult
+    static func sendToGroup(chatGuid: String, body: String) -> (Bool, String) {
+        let esc = body.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        let gesc = chatGuid.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Messages"
+          try
+            set targetChat to a reference to chat id "\(gesc)"
+            send "\(esc)" to targetChat
+            return "ok"
+          on error e
+            return "err:" & e
+          end try
+        end tell
+        """
+        let out = runOsa(script)
+        if out == "ok" { return (true, "group") }
+        // The usual failure is a dormant chat Messages hasn't loaded ("Can't get
+        // chat id"). Surface it plainly so the caller can tell the user to open
+        // the conversation once.
+        return (false, out.isEmpty ? "group send failed (no response)" : out)
     }
 
     // MARK: Accessibility GUI-send (SMS to phone numbers)
@@ -490,16 +561,38 @@ enum BlueBubbles {
 
 // MARK: - Unified send dispatcher (routes to the active engine)
 enum Messaging {
+    /// Per-message override: the server may tag a queued message with a channel
+    /// ("imessage"/"sms") and/or a group chat GUID. When present, these win over
+    /// the account-wide sendMode so GHL/API/Zapier can pick the channel per send.
     @discardableResult
-    static func send(_ state: AppState, to: String, body: String) -> (Bool, String) {
+    static func send(_ state: AppState, to: String, body: String,
+                     channel: String? = nil, chatGuid: String? = nil) -> (Bool, String) {
+        // Group send (existing chat) is iMessage-only and only on This Mac.
+        if let g = chatGuid, !g.isEmpty {
+            switch state.engine ?? .thisMac {
+            case .thisMac:    return iMsg.sendToGroup(chatGuid: g, body: body)
+            case .bluebubbles:
+                return BlueBubbles.send(base: state.bbURL, password: state.bbPassword,
+                                        to: g, body: body, method: "private-api")
+            }
+        }
+        // Resolve the effective mode: explicit per-message channel overrides the
+        // account default.
+        let mode: SendMode = {
+            switch channel?.lowercased() {
+            case "sms":      return .sms
+            case "imessage": return .imessage
+            default:         return state.sendMode
+            }
+        }()
         switch state.engine ?? .thisMac {
         case .thisMac:
-            return iMsg.send(to: to, body: body, mode: state.sendMode)
+            return iMsg.send(to: to, body: body, mode: mode)
         case .bluebubbles:
             // method: iMessage for Apple handles / imessage mode, else private (SMS).
             let isEmail = to.contains("@")
             let method: String
-            switch state.sendMode {
+            switch mode {
             case .imessage: method = "apple-script"      // iMessage
             case .sms:      method = "private-api"        // force SMS
             case .auto:     method = isEmail ? "apple-script" : "private-api"
@@ -555,7 +648,14 @@ final class Bridge: ObservableObject {
                 for m in msgs {
                     let mid = "\(m["ID"] ?? m["id"] ?? "")"
                     let to = "\(m["number"] ?? "")", body = "\(m["message"] ?? "")"
-                    let (ok, info) = Messaging.send(self.state, to: to, body: body)
+                    // Optional per-message routing from the server. `channel`
+                    // forces imessage/sms; `chatGuid` targets an existing group.
+                    // Absent on legacy rows -> fall back to the account default.
+                    let channel = (m["channel"] as? String) ?? (m["sendAs"] as? String)
+                    let guidRaw = (m["chatGuid"] as? String) ?? (m["groupGuid"] as? String) ?? ""
+                    let chatGuid = guidRaw.isEmpty ? nil : guidRaw
+                    let (ok, info) = Messaging.send(self.state, to: to, body: body,
+                                                    channel: channel, chatGuid: chatGuid)
                     _ = SMS8.post("report-status.php", ["androidId":self.state.androidId,"userId":self.state.userId,"messageId":mid,"status": ok ? "Sent":"Failed"])
                     self.logLine(ok ? "→ sent to \(to) via \(info)" : "→ send FAILED \(to): \(info)")
                 }
@@ -1522,30 +1622,27 @@ struct RootView: View {
         }
     }
 
-    // "Send as" picker — SMS is DISABLED until Accessibility is granted (This Mac).
+    // "Send as" picker — Auto / iMessage only / SMS only, for BOTH engines.
+    // This Mac can now send SMS via a paired iPhone (Text Message Forwarding),
+    // so it gets the full choice. Auto needs Full Disk Access to detect an
+    // iMessage failure and fall back to SMS — we surface that requirement.
     @ViewBuilder var sendAsPanel: some View {
-        if (state.engine ?? .thisMac) == .thisMac {
-            // This Mac is iMessage-only — no send-mode choice.
-            panel {
+        let thisMac = (state.engine ?? .thisMac) == .thisMac
+        panel {
+            HStack(spacing: 6) {
                 Text("Send as").font(.system(size: 14, weight: .semibold))
-                HStack(spacing: 8) {
-                    Image(systemName: "message.fill").foregroundColor(BRAND).font(.system(size: 13))
-                    Text("iMessage").font(.system(size: 13, weight: .medium))
-                }
-                Text("This Mac delivers through iMessage, so messages reach Apple users (iPhone, iPad, Mac). For SMS to other phones, use the Remote Mac delivery method.")
-                    .font(.system(size: 11)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                HelpTip(text: "Auto: try iMessage first, fall back to SMS if it can’t deliver. iMessage only: Apple contacts only. SMS only: always send as a text message (needs a paired iPhone).")
             }
-        } else {
-            panel {
-                HStack(spacing: 6) {
-                    Text("Send as").font(.system(size: 14, weight: .semibold))
-                    HelpTip(text: "Auto: try iMessage first, fall back to SMS if it can’t deliver. iMessage only: Apple contacts only. SMS only: always send as a text message.")
-                }
-                Picker("", selection: Binding(get: { state.sendMode }, set: { state.sendMode = $0; state.save() })) {
-                    ForEach(SendMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.radioGroup).labelsHidden()
-                Text("Auto is recommended: tries iMessage first, and if it can’t deliver (e.g. an Android number), it sends as SMS automatically.")
-                    .font(.system(size: 11)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+            Picker("", selection: Binding(get: { state.sendMode }, set: { state.sendMode = $0; state.save() })) {
+                ForEach(SendMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }.pickerStyle(.radioGroup).labelsHidden()
+            Text("Auto is recommended: tries iMessage first, and if it can’t deliver (e.g. an Android number), it sends as SMS automatically.")
+                .font(.system(size: 11)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+            if thisMac && (state.sendMode == .sms || state.sendMode == .auto) {
+                // SMS on This Mac relies on an attached iPhone relaying over its SIM.
+                Text("SMS on this Mac sends through a paired iPhone (same Apple ID, Text Message Forwarding on). Auto fallback also needs Full Disk Access so the app can tell when an iMessage didn’t deliver.")
+                    .font(.system(size: 11)).foregroundColor(fullDisk ? .secondary : .orange)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

@@ -7,9 +7,11 @@
 ## What it does
 
 - **Send iMessage via API** — deliver blue-bubble iMessage from GoHighLevel, Zapier, the SMS8 REST API, or a webhook.
-- **Two-way** — replies flow back into your SMS8 inbox and your webhooks, threaded by contact.
+- **Automatic SMS fallback** — when iMessage can't deliver (for example an Android number), the app sends it as a text message through a paired iPhone instead. Pick **Auto** (iMessage, fall back to SMS), **iMessage only**, or **SMS only**.
+- **Two-way** — replies (iMessage and SMS) flow back into your SMS8 inbox and your webhooks, threaded by contact.
+- **iMessage to email or phone** — send to an iPhone number or an iCloud/Apple email address.
 - **One account for iMessage and Android SMS** — one inbox, one API, one flat plan.
-- **Bring your own Mac**, or run a hosted Mac for SMS to Android, group chats, voice notes and RCS.
+- **Bring your own Mac** (with a paired iPhone for SMS), or run a hosted Mac.
 
 Full product page: **https://sms8.io/send-imessage-api**
 
@@ -27,10 +29,12 @@ No SMS8 account yet? [Create one free](https://app.sms8.io/register).
 SMS8's API is device-agnostic. A device pairs with a code, polls for queued messages, sends them, and reports inbound. SMS8 Gateway is "just another device" that sends over iMessage instead of a SIM. Nothing changes server-side — it uses the same pairing, the same inbox, the same webhooks as the Android app.
 
 ```
-Your SMS8 account  ──queued message──►  SMS8 Gateway (Mac)  ──►  Messages.app  ──►  iMessage
-        ▲                                      │
+Your SMS8 account  ──queued message──►  SMS8 Gateway (Mac)  ──►  Messages.app  ──►  iMessage (blue)
+        ▲                                      │                                └─ fallback ─►  SMS (green, via paired iPhone)
         └────────── reply ◄── chat.db ◄────────┘
 ```
+
+**Auto mode:** the app sends over iMessage first and verifies delivery against the Messages database. If iMessage didn't deliver (Apple's `send` never reports this directly, but the failure is recorded locally), it automatically resends the message as an SMS through the paired iPhone's SIM (Text Message Forwarding). SMS fallback needs an iPhone paired to the Mac and Full Disk Access granted so the app can read the delivery result.
 
 ## Build from source
 
@@ -42,15 +46,16 @@ cd imessage
 ```
 
 See [`main.swift`](./main.swift) for the full source. It uses:
-- AppleScript to drive Messages.app for iMessage send
-- `~/Library/Messages/chat.db` (with Full Disk Access) for receive
+- AppleScript to drive Messages.app, addressing the concrete iMessage or SMS service by id
+- `~/Library/Messages/chat.db` (with Full Disk Access) to verify delivery and receive replies
 - The SMS8 `/services/v-ios/` device contract (isolated from the Android app)
 
 ## iMessage vs SMS
 
-- **iMessage** reaches Apple users (iPhone, iPad, Mac) as blue bubbles. Works on any paired Mac.
-- **SMS to Android** needs a hosted Mac with the BlueBubbles bridge. On a local Mac, use the [SMS8 Android app](https://sms8.io/android-sms-gateway) for SMS.
-- **Group chats, voice notes and RCS** are available on the hosted Mac setup.
+- **iMessage** reaches Apple users (iPhone, iPad, Mac) as blue bubbles. Works on any Mac signed into an Apple ID.
+- **SMS to Android** is sent as a green text message through a **paired iPhone** (same Apple ID, Text Message Forwarding on). The Mac has no SIM of its own, so the iPhone relays the SMS over its carrier. **Auto** mode uses this automatically when iMessage can't deliver.
+- **No iPhone attached?** Use **iMessage only** on the Mac, and the [SMS8 Android app](https://sms8.io/android-sms-gateway) for SMS — same account, same inbox.
+- **Group chats, voice notes and RCS** require a hosted-Mac / BlueBubbles setup (advanced).
 
 ## SMS8 vs other iMessage APIs
 
@@ -62,6 +67,7 @@ Most iMessage APIs charge 60 to 1,000 USD per line every month, only do iMessage
 | Send iMessage via API | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Receive replies | ✅ | ✅ | ✅ | ✅ | ✅ |
 | No per-message fee | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Automatic SMS fallback | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Android SMS on same account | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Bring your own Mac | ✅ | ❌ | ✅ | ❌ | ❌ |
 | GoHighLevel native provider | ✅ | ❌ | ❌ | ❌ | ❌ |
