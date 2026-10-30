@@ -81,12 +81,24 @@ enum SMS8 {
     }()
 
     static func post(_ path: String, _ fields: [String:String]) -> [String:Any]? {
-        // Try up to 2 times — the first request on a fresh process can stall.
-        for attempt in 0..<2 {
+        // Try up to 3 times — the first request on a fresh process can stall
+        // (URLSession cold start). Short backoff between tries so a transient
+        // network blip doesn't surface as "unreachable".
+        for attempt in 0..<3 {
             if let r = attemptPost(path, fields) { return r }
-            if attempt == 0 { Thread.sleep(forTimeInterval: 0.6) }
+            if attempt < 2 { Thread.sleep(forTimeInterval: attempt == 0 ? 0.5 : 1.2) }
         }
         return nil
+    }
+
+    // Warm the URLSession so the first real request doesn't cold-start and
+    // look "unreachable". Fire-and-forget on app launch.
+    static func warmUp() {
+        DispatchQueue.global().async {
+            var req = URLRequest(url: URL(string: "\(VIOS)/heartbeat.php")!)
+            req.httpMethod = "POST"; req.timeoutInterval = 8
+            session.dataTask(with: req) { _,_,_ in }.resume()
+        }
     }
 
     private static func attemptPost(_ path: String, _ fields: [String:String]) -> [String:Any]? {
@@ -512,10 +524,21 @@ final class Bridge: ObservableObject {
     }
     func stop() { running = false; timer?.invalidate(); timer = nil; logLine("■ Bridge stopped.") }
 
+    // True if a server reply means this device no longer exists on the account
+    // (deleted from the Devices page, account reset, etc.). We detect it so the
+    // app can stop silently failing and send the user back to pairing.
+    private func isDeviceGone(_ r: [String:Any]?) -> Bool {
+        guard let r = r, (r["success"] as? Bool) == false else { return false }
+        let msg = ((r["error"] as? [String:Any])?["message"] as? String ?? "").lowercased()
+        return msg.contains("device not found") || msg.contains("doesn't exist")
+            || msg.contains("does not exist") || msg.contains("no device")
+    }
+
     func tick() {
         DispatchQueue.global().async {
             // SEND
             if let r = SMS8.post("get-messages.php", ["androidId":self.state.androidId,"userId":self.state.userId,"limit":"10"]) {
+                if self.isDeviceGone(r) { self.handleDeviceGone(); return }
                 let msgs = ((r["data"] as? [String:Any])?["messages"] as? [[String:Any]]) ?? (r["messages"] as? [[String:Any]]) ?? []
                 for m in msgs {
                     let mid = "\(m["ID"] ?? m["id"] ?? "")"
@@ -528,7 +551,24 @@ final class Bridge: ObservableObject {
             // RECEIVE — only when the user enabled it.
             if self.state.receiveEnabled { self.receiveTick() }
             // heartbeat
-            _ = SMS8.post("heartbeat.php", ["androidId":self.state.androidId,"userId":self.state.userId])
+            let hb = SMS8.post("heartbeat.php", ["androidId":self.state.androidId,"userId":self.state.userId])
+            if self.isDeviceGone(hb) { self.handleDeviceGone() }
+        }
+    }
+
+    // The paired device was removed server-side. Stop the bridge and reset to
+    // the pairing screen so the user can connect again, instead of looping on
+    // failed polls (which looked like "unreachable").
+    private func handleDeviceGone() {
+        DispatchQueue.main.async {
+            self.logLine("⚠︎ This Mac is no longer paired to your account. Please pair again.")
+            self.stop()
+            self.state.paired = false
+            self.state.deviceId = ""; self.state.apiKey = ""; self.state.userId = ""; self.state.email = ""
+            self.state.lastRowId = 0
+            // Fresh androidId so re-pairing creates a clean device.
+            self.state.androidId = "mac-" + UUID().uuidString.prefix(16)
+            self.state.save()
         }
     }
 
@@ -655,6 +695,7 @@ struct RootView: View {
             if state.paired && state.autoStart && canRun && !bridge.running { bridge.start() }
         }
         .onAppear {
+            SMS8.warmUp()   // prime the network so the first request isn't a cold-start "unreachable"
             if state.engine == nil { showEnginePicker = true }
             // Auto-start the bridge on launch when paired, set up, and the user
             // hasn't explicitly turned it off. Keeps it running by default.
@@ -1654,7 +1695,7 @@ struct RootView: View {
             let r = SMS8.post("pairing-code-claim.php", [
                 "code": entered,
                 "androidId": state.androidId, "model": "Mac — iMessage",
-                "appVersion": "imsg-1.0", "androidVersion": "macOS"])
+                "appVersion": "i10.0.53", "androidVersion": "macOS"])
             // Ensure the progress is visible for at least ~1.4s so it reads as
             // "setting up", not an instant flash.
             let elapsed = Date().timeIntervalSince(startedAt)
