@@ -12,8 +12,15 @@ let SMS8_BASE = "https://app.sms8.io"
 let VIOS      = "\(SMS8_BASE)/services/v-ios"
 let STATE_URL = FileManager.default.homeDirectoryForCurrentUser
     .appendingPathComponent(".sms8-imessage-agent.json")
-let CHAT_DB   = FileManager.default.homeDirectoryForCurrentUser
-    .appendingPathComponent("Library/Messages/chat.db").path
+// The real user home (inside App Sandbox, homeDirectoryForCurrentUser points
+// at the app container, not at ~/Library/Messages).
+let REAL_HOME: URL = {
+    if let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir {
+        return URL(fileURLWithPath: String(cString: dir), isDirectory: true)
+    }
+    return FileManager.default.homeDirectoryForCurrentUser
+}()
+let CHAT_DB   = REAL_HOME.appendingPathComponent("Library/Messages/chat.db").path
 
 // Which engine delivers messages on this machine.
 //  thisMac     — drive the local Messages.app (AppleScript for iMessage,
@@ -164,12 +171,22 @@ enum iMsg {
         return nil
     }
 
+    // Runs AppleScript in-process (NSAppleScript). Works inside App Sandbox
+    // with the Messages apple-events exception, unlike spawning osascript.
     private static func runOsa(_ script: String) -> String {
-        let p = Process(); p.launchPath = "/usr/bin/osascript"; p.arguments = ["-e", script]
-        let pipe = Pipe(); p.standardOutput = pipe; p.standardError = pipe
-        do { try p.run(); p.waitUntilExit() } catch { return "err:\(error)" }
-        return String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var result = ""
+        let work = {
+            var err: NSDictionary?
+            guard let s = NSAppleScript(source: script) else { result = "err:could not compile script"; return }
+            let d = s.executeAndReturnError(&err)
+            if let e = err {
+                result = "err:" + ((e[NSAppleScript.errorMessage] as? String) ?? "\(e)")
+                return
+            }
+            result = (d.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if Thread.isMainThread { work() } else { DispatchQueue.main.sync(execute: work) }
+        return result
     }
 
     /// Send via a specific Messages service type ("iMessage" or "SMS").
@@ -833,7 +850,12 @@ struct RootView: View {
         }
         .onAppear {
             SMS8.warmUp()   // prime the network so the first request isn't a cold-start "unreachable"
+            #if MAS
+            // App Store build: this Mac only (no remote-server option to configure).
+            if state.engine != .thisMac { state.engine = .thisMac; state.save() }
+            #else
             if state.engine == nil { showEnginePicker = true }
+            #endif
             // Auto-start the bridge on launch when paired, set up, and the user
             // hasn't explicitly turned it off. Keeps it running by default.
             if state.paired && state.autoStart && canRun && !bridge.running {
@@ -1162,7 +1184,7 @@ struct RootView: View {
                 appIcon.frame(width: 34, height: 34)
                 VStack(alignment: .leading, spacing: 0) {
                     Text("SMS8").font(.system(size: 14, weight: .bold))
-                    Text("iMessage").font(.system(size: 11)).foregroundColor(.secondary)
+                    Text("Gateway").font(.system(size: 11)).foregroundColor(.secondary)
                 }
             }.padding(.bottom, 14).padding(.horizontal, 6)
             ForEach(Tab.allCases) { t in
@@ -1206,13 +1228,8 @@ struct RootView: View {
                     .font(.system(size: 12)).foregroundColor(.secondary)
             }
             Spacer()
-            if state.paired {
-                Button(bridge.running ? "Stop" : "Start") {
-                    if bridge.running { state.autoStart = false; state.save(); bridge.stop() }
-                    else { state.autoStart = true; state.save(); bridge.start() }
-                }
-                    .buttonStyle(.borderedProminent).tint(bridge.running ? .red : BRAND)
-            }
+            // Start/Stop lives in one place: the status banner (Start) and the
+            // Bridge card (Stop).
         }.padding(.horizontal, 20).padding(.vertical, 13)
     }
 
@@ -1274,12 +1291,11 @@ struct RootView: View {
                 Text(sub).font(.system(size: 12)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            if state.paired {
-                Button(live ? "Stop" : "Start bridge") {
-                    if live { state.autoStart = false; state.save(); bridge.stop() }
-                    else    { state.autoStart = true;  state.save(); bridge.start() }
+            if state.paired && !live {
+                Button("Start bridge") {
+                    state.autoStart = true; state.save(); bridge.start()
                 }
-                    .buttonStyle(.borderedProminent).tint(live ? .red : BRAND)
+                    .buttonStyle(.borderedProminent).tint(BRAND)
                     .disabled(!runnable && !live)
             }
         }
@@ -1389,8 +1405,10 @@ struct RootView: View {
                             Button("Disconnect") { state.paired = false; state.save(); bridge.stop() }
                                 .buttonStyle(.bordered).controlSize(.small)
                         }
+                        #if !MAS
                         Text("Delivery method: \((state.engine ?? .thisMac).rawValue). Change it in Settings.")
                             .font(.system(size: 11.5)).foregroundColor(.secondary)
+                        #endif
                     }
                     testPanel
                 }
@@ -1675,6 +1693,7 @@ struct RootView: View {
     // ── SETTINGS TAB ──
     var settingsTab: some View {
         VStack(alignment: .leading, spacing: 18) {
+            #if !MAS
             // Delivery engine
             panel {
                 HStack(spacing: 6) {
@@ -1690,6 +1709,7 @@ struct RootView: View {
                     .font(.system(size: 11)).foregroundColor(.secondary)
             }
 
+            #endif
             if (state.engine ?? .thisMac) == .bluebubbles { bluebubblesPanel }
             else { permissionsPanel }
 
@@ -1774,12 +1794,11 @@ struct RootView: View {
     // (macOS only picks up FDA at process launch).
     func relaunchApp() {
         let url = Bundle.main.bundleURL
-        let task = Process()
-        task.launchPath = "/usr/bin/open"
-        task.arguments = ["-n", url.path]
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.createsNewApplicationInstance = true
         // Launch a fresh instance after a short delay, then quit this one.
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
-            try? task.run()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            NSWorkspace.shared.openApplication(at: url, configuration: cfg) { _, _ in }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             NSApp.terminate(nil)
@@ -1863,7 +1882,7 @@ struct RootView: View {
                 } else if raw.contains("not found") || raw.contains("invalid") || raw.contains("exist") {
                     msg = "That code isn’t valid. Double-check it or get a new one."
                 } else if raw.contains("limit") || raw.contains("device") {
-                    msg = "Your plan’s device limit is reached. Remove a device or upgrade, then retry."
+                    msg = "This account already has the maximum number of devices. Remove a device in your SMS8 account, then retry."
                 } else if !raw.isEmpty {
                     msg = raw.prefix(1).uppercased() + raw.dropFirst()
                 } else {
