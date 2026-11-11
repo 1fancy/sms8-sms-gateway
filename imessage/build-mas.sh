@@ -6,9 +6,9 @@ APP="${1:-SMS8 Gateway.app}"
 BUILD="${2:?build number, e.g. 100061}"
 DIST="Apple Distribution: NEXT LABS LLC (7MMY55WK78)"
 INST="3rd Party Mac Developer Installer: NEXT LABS LLC (7MMY55WK78)"
-# Universal binary, App Store flavour (-D MAS: this Mac only, no remote engine)
+# Universal binary, always this Mac (no remote engine)
 for a in arm64 x86_64; do
-  swiftc -O -parse-as-library -D MAS -target $a-apple-macos14 main.swift \
+  swiftc -O -parse-as-library -target $a-apple-macos14 main.swift \
     -framework SwiftUI -framework AppKit -framework Foundation -lsqlite3 -o SMS8iMessage-$a
 done
 lipo -create SMS8iMessage-arm64 SMS8iMessage-x86_64 -output SMS8iMessage

@@ -850,12 +850,8 @@ struct RootView: View {
         }
         .onAppear {
             SMS8.warmUp()   // prime the network so the first request isn't a cold-start "unreachable"
-            #if MAS
-            // App Store build: this Mac only (no remote-server option to configure).
+            // This Mac only (no remote-server option to configure).
             if state.engine != .thisMac { state.engine = .thisMac; state.save() }
-            #else
-            if state.engine == nil { showEnginePicker = true }
-            #endif
             // Auto-start the bridge on launch when paired, set up, and the user
             // hasn't explicitly turned it off. Keeps it running by default.
             if state.paired && state.autoStart && canRun && !bridge.running {
@@ -876,7 +872,6 @@ struct RootView: View {
         .onChange(of: testPassed) { _, passed in
             if passed { withAnimation { wizPageState = 2 } }
         }
-        .sheet(isPresented: $showEnginePicker) { enginePicker }
     }
 
     // ── Tabbed layout (shown after setup / when running) ──
@@ -1405,10 +1400,6 @@ struct RootView: View {
                             Button("Disconnect") { state.paired = false; state.save(); bridge.stop() }
                                 .buttonStyle(.bordered).controlSize(.small)
                         }
-                        #if !MAS
-                        Text("Delivery method: \((state.engine ?? .thisMac).rawValue). Change it in Settings.")
-                            .font(.system(size: 11.5)).foregroundColor(.secondary)
-                        #endif
                     }
                     testPanel
                 }
@@ -1693,23 +1684,6 @@ struct RootView: View {
     // ── SETTINGS TAB ──
     var settingsTab: some View {
         VStack(alignment: .leading, spacing: 18) {
-            #if !MAS
-            // Delivery engine
-            panel {
-                HStack(spacing: 6) {
-                    Text("Delivery method").font(.system(size: 14, weight: .semibold))
-                    HelpTip(text: "“This Mac” sends through the Messages app here — great for iMessage. “Remote Mac” connects to a remote server for reliable iMessage AND SMS plus group chats.")
-                }
-                Picker("", selection: Binding(get: { state.engine ?? .thisMac }, set: { state.engine = $0; state.save() })) {
-                    ForEach(SendEngine.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.radioGroup).labelsHidden()
-                Text((state.engine ?? .thisMac) == .thisMac
-                     ? "Messages are sent through the Messages app on this Mac."
-                     : "Messages are sent through your remote Mac server. Nothing else is needed on this Mac.")
-                    .font(.system(size: 11)).foregroundColor(.secondary)
-            }
-
-            #endif
             if (state.engine ?? .thisMac) == .bluebubbles { bluebubblesPanel }
             else { permissionsPanel }
 
