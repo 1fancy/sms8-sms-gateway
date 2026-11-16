@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import SQLite3
+import Network
 
 // ============================================================================
 //  SMS8 iMessage Bridge — native macOS app
@@ -22,15 +23,6 @@ let REAL_HOME: URL = {
 }()
 let CHAT_DB   = REAL_HOME.appendingPathComponent("Library/Messages/chat.db").path
 
-// Which engine delivers messages on this machine.
-//  thisMac     — drive the local Messages.app (AppleScript for iMessage,
-//                Accessibility GUI-send for SMS). No server, runs on the
-//                user's own Mac. Needs Automation + (for SMS) Accessibility
-//                + (for receive) Full Disk Access.
-//  bluebubbles — talk to a BlueBubbles server over HTTP. Most robust for
-//                SMS/iMessage both ways; good for a dedicated / hosted Mac.
-enum SendEngine: String, CaseIterable { case thisMac = "This Mac", bluebubbles = "Remote Mac" }
-
 // MARK: - Persistent state
 final class AppState: ObservableObject {
     @Published var paired = false
@@ -50,9 +42,6 @@ final class AppState: ObservableObject {
     @Published var userId = ""
     @Published var receiveEnabled = true               // ON by default -> SMS8 is two-way, so receiving + Full Disk Access are expected
     @Published var sendMode: SendMode = .auto
-    @Published var engine: SendEngine? = nil           // nil -> show first-run engine picker
-    @Published var bbURL = ""                          // BlueBubbles server base URL
-    @Published var bbPassword = ""                     // BlueBubbles server password
     @Published var autoStart = true                    // start the bridge automatically on launch
     var apiKey = "", deviceId = "", androidId = "", lastRowId: Int64 = 0
 
@@ -72,16 +61,12 @@ final class AppState: ObservableObject {
         lastRowId = (j["lastRowId"] as? Int64) ?? ((j["lastRowId"] as? NSNumber)?.int64Value ?? 0)
         receiveEnabled = (j["receiveEnabled"] as? Bool) ?? true
         sendMode = SendMode(rawValue: (j["sendMode"] as? String) ?? "") ?? .auto
-        engine   = SendEngine(rawValue: (j["engine"] as? String) ?? "")
-        bbURL    = (j["bbURL"] as? String) ?? ""
-        bbPassword = (j["bbPassword"] as? String) ?? ""
         autoStart = (j["autoStart"] as? Bool) ?? true
     }
     func save() {
         let j: [String:Any] = ["paired":paired,"email":email,"userId":userId,
             "apiKey":apiKey,"deviceId":deviceId,"androidId":androidId,"lastRowId":lastRowId,
             "receiveEnabled":receiveEnabled,"sendMode":sendMode.rawValue,
-            "engine":engine?.rawValue ?? "","bbURL":bbURL,"bbPassword":bbPassword,
             "autoStart":autoStart]
         if let d = try? JSONSerialization.data(withJSONObject: j) { try? d.write(to: STATE_URL) }
     }
@@ -154,8 +139,12 @@ enum iMsg {
     // Cache the resolved SMS/iMessage service ids so we send via a concrete
     // service object (reliable) instead of `whose service type = …` (flaky).
     private static var _svcCache: [String:String] = [:]
+    private static let _svcLock = NSLock()
+    /// Forget cached service ids (after the user signs in again in Messages).
+    static func resetServiceCache() { _svcLock.lock(); _svcCache.removeAll(); _svcLock.unlock() }
     private static func serviceId(_ type: String) -> String? {
-        if let c = _svcCache[type] { return c }
+        _svcLock.lock(); let cached = _svcCache[type]; _svcLock.unlock()
+        if let c = cached { return c }
         let script = """
         tell application "Messages"
           repeat with s in services
@@ -167,8 +156,51 @@ enum iMsg {
         return ""
         """
         let out = runOsa(script).trimmingCharacters(in: .whitespacesAndNewlines)
-        if !out.isEmpty && !out.hasPrefix("err") { _svcCache[type] = out; return out }
+        if !out.isEmpty && !out.hasPrefix("err") { _svcLock.lock(); _svcCache[type] = out; _svcLock.unlock(); return out }
         return nil
+    }
+
+    /// State of the Messages accounts: is there a usable iMessage account, and
+    /// is there an SMS account (paired iPhone with Text Message Forwarding)?
+    /// Only call once Automation is granted, or macOS shows its prompt.
+    static func accountStatus() -> (IMessageAccountStatus, Bool) {
+        let script = """
+        tell application "Messages"
+          set out to ""
+          repeat with a in accounts
+            try
+              set out to out & (service type of a as text) & "|" & (enabled of a as text) & "|" & (connection status of a as text) & linefeed
+            end try
+          end repeat
+          return out
+        end tell
+        """
+        let out = runOsa(script)
+        if out.hasPrefix("err") { return (.unknown, false) }
+        var imsg: [(Bool, String)] = []
+        var sms = false
+        for line in out.split(whereSeparator: { $0 == "\n" || $0 == "\r" }) {
+            let f = line.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+            guard f.count >= 3 else { continue }
+            let enabled = (f[1] == "true")
+            if f[0] == "imessage" { imsg.append((enabled, f[2])) }
+            if f[0] == "sms" && enabled { sms = true }
+        }
+        if imsg.isEmpty { return (.notSignedIn, sms) }
+        if imsg.contains(where: { $0.0 && $0.1 == "connected" }) { return (.ready, sms) }
+        if imsg.contains(where: { $0.0 && $0.1 == "connecting" }) { return (.connecting, sms) }
+        if imsg.contains(where: { $0.0 }) { return (.notSignedIn, sms) }   // enabled but disconnected
+        return (.turnedOff, sms)
+    }
+
+    /// Turn raw AppleScript errors into something a user can act on.
+    static func friendlyError(_ raw: String) -> String {
+        if raw.contains("-1743") || raw.localizedCaseInsensitiveContains("not authorized to send apple events") {
+            return "SMS8 Gateway is not allowed to control Messages. Turn it on in System Settings, Privacy & Security, Automation."
+        }
+        if raw.contains("-1744") { return "macOS is waiting for you to allow SMS8 Gateway to control Messages." }
+        if raw.contains("-600") || raw.contains("-609") { return "Messages is not running and could not be opened." }
+        return raw
     }
 
     // Runs AppleScript in-process (NSAppleScript). Works inside App Sandbox
@@ -180,7 +212,8 @@ enum iMsg {
             guard let s = NSAppleScript(source: script) else { result = "err:could not compile script"; return }
             let d = s.executeAndReturnError(&err)
             if let e = err {
-                result = "err:" + ((e[NSAppleScript.errorMessage] as? String) ?? "\(e)")
+                let num = (e[NSAppleScript.errorNumber] as? NSNumber).map { " (\($0))" } ?? ""
+                result = "err:" + ((e[NSAppleScript.errorMessage] as? String) ?? "\(e)") + num
                 return
             }
             result = (d.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -194,7 +227,11 @@ enum iMsg {
     /// re-routed), then VERIFIES against chat.db that the row was really sent.
     private static func sendVia(_ service: String, to: String, body: String, verifySteps: Int = 8) -> (Bool, String) {
         let esc = body.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-        guard let sid = serviceId(service) else { return (false, "no \(service) service on this Mac") }
+        guard let sid = serviceId(service) else {
+            return (false, service == "iMessage"
+                ? "Messages on this Mac is not signed in to iMessage (or SMS8 Gateway is not allowed to control Messages)."
+                : "no SMS service on this Mac (pair an iPhone with Text Message Forwarding)")
+        }
         let before = lastSentRowId(to: to)
         let script = """
         tell application "Messages"
@@ -208,7 +245,7 @@ enum iMsg {
         end tell
         """
         let out = runOsa(script)
-        if out != "ok" { return (false, out.isEmpty ? "no response" : out) }
+        if out != "ok" { return (false, out.isEmpty ? "no response from Messages" : friendlyError(out)) }
         // Verify: a NEW outgoing row to this recipient must appear with error=0.
         // AppleScript returns "ok" even when the message never queues, so we
         // confirm it actually landed in the Messages DB before reporting Sent.
@@ -312,7 +349,7 @@ enum iMsg {
         // The usual failure is a dormant chat Messages hasn't loaded ("Can't get
         // chat id"). Surface it plainly so the caller can tell the user to open
         // the conversation once.
-        return (false, out.isEmpty ? "group send failed (no response)" : out)
+        return (false, out.isEmpty ? "group send failed (no response)" : friendlyError(out))
     }
 
     // MARK: Accessibility GUI-send (SMS to phone numbers)
@@ -426,7 +463,7 @@ enum iMsg {
         return nil
     }
 
-    static func canReadDB() -> Bool { sqlite3_open_v2(CHAT_DB, nil, SQLITE_OPEN_READONLY, nil) == SQLITE_OK ? true : fileReadable() }
+    static func canReadDB() -> Bool { fileReadable() }
     static func fileReadable() -> Bool {
         var db: OpaquePointer?
         let ok = sqlite3_open_v2(CHAT_DB, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK
@@ -518,83 +555,7 @@ enum iMsg {
     }
 }
 
-// MARK: - BlueBubbles client (Hosted Mac engine)
-// Talks to a BlueBubbles server over HTTP. Server URL + password are set by
-// the user. BlueBubbles reliably forces SMS-vs-iMessage via its Private API
-// and exposes inbound over a polling endpoint, so both directions work without
-// Accessibility/Full Disk Access on THIS machine.
-enum BlueBubbles {
-    static func send(base: String, password: String, to: String, body: String, method: String) -> (Bool, String) {
-        guard var comps = URLComponents(string: trimBase(base) + "/api/v1/message/text") else { return (false, "bad server URL") }
-        comps.queryItems = [URLQueryItem(name: "password", value: password)]
-        guard let url = comps.url else { return (false, "bad server URL") }
-        var req = URLRequest(url: url); req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let payload: [String:Any] = ["chatGuid": "", "tempGuid": UUID().uuidString,
-            "message": body, "method": method, "addresses": [to]]
-        // BlueBubbles expects either a chatGuid or an addresses array; using
-        // addresses lets it create/resolve the chat and pick SMS when method=private.
-        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
-        return http(req)
-    }
-
-    /// Fetch recent inbound messages (is_from_me=0) since a cursor timestamp (ms).
-    static func fetchInbound(base: String, password: String, afterMs: Int64) -> [(guid:String, address:String, text:String, ms:Int64)] {
-        guard var comps = URLComponents(string: trimBase(base) + "/api/v1/message/query") else { return [] }
-        comps.queryItems = [URLQueryItem(name: "password", value: password)]
-        guard let url = comps.url else { return [] }
-        var req = URLRequest(url: url); req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let payload: [String:Any] = ["limit": 25, "offset": 0, "with": ["handle","chats"],
-            "sort": "DESC", "after": afterMs, "where": [["statement":"message.is_from_me = :fromMe","args":["fromMe":0]]]]
-        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
-        let (ok, raw) = httpRaw(req); guard ok, let d = raw.data(using: .utf8),
-            let j = try? JSONSerialization.jsonObject(with: d) as? [String:Any],
-            let data = j["data"] as? [[String:Any]] else { return [] }
-        var out: [(String,String,String,Int64)] = []
-        for m in data {
-            let text = (m["text"] as? String) ?? ""
-            let guid = (m["guid"] as? String) ?? ""
-            let ms   = (m["dateCreated"] as? Int64) ?? ((m["dateCreated"] as? NSNumber)?.int64Value ?? 0)
-            let addr = ((m["handle"] as? [String:Any])?["address"] as? String) ?? ""
-            if !text.isEmpty && !addr.isEmpty { out.append((guid, addr, text, ms)) }
-        }
-        return out
-    }
-
-    static func ping(base: String, password: String) -> (Bool, String) {
-        guard var comps = URLComponents(string: trimBase(base) + "/api/v1/ping") else { return (false, "bad URL") }
-        comps.queryItems = [URLQueryItem(name: "password", value: password)]
-        guard let url = comps.url else { return (false, "bad URL") }
-        var req = URLRequest(url: url); req.httpMethod = "GET"
-        let (ok, raw) = httpRaw(req)
-        return ok ? (true, "connected") : (false, raw.isEmpty ? "no response" : raw)
-    }
-
-    private static func trimBase(_ s: String) -> String {
-        var b = s.trimmingCharacters(in: .whitespaces)
-        if b.hasSuffix("/") { b.removeLast() }
-        return b
-    }
-    private static func http(_ req: URLRequest) -> (Bool, String) {
-        let (ok, raw) = httpRaw(req)
-        if ok { return (true, "Remote Mac") }
-        return (false, raw.isEmpty ? "Remote server: no response" : raw)
-    }
-    private static func httpRaw(_ reqIn: URLRequest) -> (Bool, String) {
-        var req = reqIn; req.timeoutInterval = 20
-        let sem = DispatchSemaphore(value: 0); var ok = false; var body = ""
-        SMS8.session.dataTask(with: req) { d,r,_ in
-            if let h = r as? HTTPURLResponse { ok = (200..<300).contains(h.statusCode) }
-            if let d = d { body = String(data: d, encoding: .utf8) ?? "" }
-            sem.signal()
-        }.resume()
-        if sem.wait(timeout: .now() + 22) == .timedOut { return (false, "timeout") }
-        return (ok, body)
-    }
-}
-
-// MARK: - Unified send dispatcher (routes to the active engine)
+// MARK: - Unified send dispatcher
 enum Messaging {
     /// Per-message override: the server may tag a queued message with a channel
     /// ("imessage"/"sms") and/or a group chat GUID. When present, these win over
@@ -602,14 +563,9 @@ enum Messaging {
     @discardableResult
     static func send(_ state: AppState, to: String, body: String,
                      channel: String? = nil, chatGuid: String? = nil) -> (Bool, String) {
-        // Group send (existing chat) is iMessage-only and only on This Mac.
+        // Group send (existing chat) is iMessage-only.
         if let g = chatGuid, !g.isEmpty {
-            switch state.engine ?? .thisMac {
-            case .thisMac:    return iMsg.sendToGroup(chatGuid: g, body: body)
-            case .bluebubbles:
-                return BlueBubbles.send(base: state.bbURL, password: state.bbPassword,
-                                        to: g, body: body, method: "private-api")
-            }
+            return iMsg.sendToGroup(chatGuid: g, body: body)
         }
         // Resolve the effective mode: explicit per-message channel overrides the
         // account default.
@@ -620,31 +576,273 @@ enum Messaging {
             default:         return state.sendMode
             }
         }()
-        switch state.engine ?? .thisMac {
-        case .thisMac:
-            return iMsg.send(to: to, body: body, mode: mode)
-        case .bluebubbles:
-            // method: iMessage for Apple handles / imessage mode, else private (SMS).
-            let isEmail = to.contains("@")
-            let method: String
-            switch mode {
-            case .imessage: method = "apple-script"      // iMessage
-            case .sms:      method = "private-api"        // force SMS
-            case .auto:     method = isEmail ? "apple-script" : "private-api"
-            }
-            return BlueBubbles.send(base: state.bbURL, password: state.bbPassword, to: to, body: body, method: method)
+        return iMsg.send(to: to, body: body, mode: mode)
+    }
+}
+
+// MARK: - Health checks
+// Detects, at launch and periodically, every condition that silently breaks the
+// gateway: no network, SMS8 unreachable, Automation (control Messages) not
+// allowed, Messages not signed in to iMessage, Full Disk Access missing.
+// Everything here works inside the App Sandbox (MAS build) as well as in the
+// direct-download build: AEDeterminePermissionToAutomateTarget is covered by the
+// com.apple.MobileSMS apple-events exception, NWPathMonitor needs no extra
+// entitlement, and System Settings / Messages are opened through NSWorkspace.
+
+enum AutomationStatus { case granted, notDetermined, denied, messagesNotRunning, unknown }
+enum IMessageAccountStatus { case ready, connecting, notSignedIn, turnedOff, unknown }
+
+struct HealthIssue: Identifiable, Equatable {
+    enum Kind: String {
+        case offline             = "offline"
+        case serverUnreachable   = "server_unreachable"
+        case automationNeeded    = "automation_not_allowed_yet"
+        case automationDenied    = "automation_denied"
+        case notSignedIn         = "imessage_signed_out"
+        case iMessageOff         = "imessage_off"
+        case fullDiskMissing     = "full_disk_access_missing"
+    }
+    let kind: Kind
+    var id: String { kind.rawValue }
+    let title: String
+    let summary: String
+    let steps: [String]
+    let blocksSending: Bool
+
+    static func make(_ k: Kind) -> HealthIssue {
+        switch k {
+        case .offline:
+            return HealthIssue(kind: k, title: "This Mac is offline",
+                summary: "SMS8 Gateway can't reach the internet, so it can't pick up queued messages or send replies to your inbox. Nothing is lost: messages wait in SMS8 and are delivered when the connection is back.",
+                steps: ["Check that Wi-Fi or Ethernet is connected.",
+                        "Open Network settings if you need to reconnect.",
+                        "Keep this app open. It reconnects on its own."],
+                blocksSending: true)
+        case .serverUnreachable:
+            return HealthIssue(kind: k, title: "Can't reach SMS8",
+                summary: "This Mac is online, but the SMS8 servers did not answer the last few requests. Queued messages stay in SMS8 until the connection works again.",
+                steps: ["Check that a firewall, VPN or content filter is not blocking app.sms8.io.",
+                        "Open the SMS8 dashboard in your browser to confirm it loads.",
+                        "Click Retry now. The app also retries on its own."],
+                blocksSending: false)
+        case .automationNeeded:
+            return HealthIssue(kind: k, title: "Allow SMS8 Gateway to control Messages",
+                summary: "To send iMessage and SMS, SMS8 Gateway needs permission to control the Messages app. macOS asks you once.",
+                steps: ["Click Allow access below.",
+                        "In the macOS prompt, click OK to let SMS8 Gateway control Messages.",
+                        "This window closes on its own once access is granted."],
+                blocksSending: false)
+        case .automationDenied:
+            return HealthIssue(kind: k, title: "SMS8 Gateway is not allowed to control Messages",
+                summary: "Permission to control Messages was turned off, so no message can be sent. Queued messages stay in SMS8 until you turn it back on.",
+                steps: ["Click Open Automation Settings below.",
+                        "Find SMS8 Gateway in the list and expand it.",
+                        "Turn on the switch next to Messages.",
+                        "Come back to this app. It checks again automatically."],
+                blocksSending: true)
+        case .notSignedIn:
+            return HealthIssue(kind: k, title: "Messages is not signed in to iMessage",
+                summary: "The Messages app on this Mac has no working iMessage account, so iMessage cannot be sent or received.",
+                steps: ["Click Open Messages below.",
+                        "In the menu bar, choose Messages, then Settings, then iMessage.",
+                        "Sign in with your Apple ID (Apple Account), or check that the account is signed in and Enable this account is on.",
+                        "Wait until Messages finishes activating, then come back to this app."],
+                blocksSending: true)
+        case .iMessageOff:
+            return HealthIssue(kind: k, title: "iMessage is turned off in Messages",
+                summary: "An iMessage account exists on this Mac but it is disabled, so iMessage cannot be sent or received.",
+                steps: ["Click Open Messages below.",
+                        "In the menu bar, choose Messages, then Settings, then iMessage.",
+                        "Turn on Enable this account.",
+                        "Come back to this app. It checks again automatically."],
+                blocksSending: true)
+        case .fullDiskMissing:
+            return HealthIssue(kind: k, title: "Full Disk Access is off",
+                summary: "Without Full Disk Access, replies can't reach your SMS8 inbox, delivery can't be confirmed, and Auto mode can't fall back to SMS. Sending iMessage still works.",
+                steps: ["Click Open Full Disk Access below.",
+                        "Turn on SMS8 Gateway in the list. If it is not listed, click the + button and choose SMS8 Gateway from Applications.",
+                        "Click Relaunch app. macOS only applies this permission after the app restarts."],
+                blocksSending: false)
         }
+    }
+}
+
+final class HealthMonitor: ObservableObject {
+    @Published private(set) var automation: AutomationStatus = .unknown
+    @Published private(set) var account: IMessageAccountStatus = .unknown
+    @Published private(set) var hasSMSAccount = false
+    @Published private(set) var fullDisk = iMsg.fileReadable()
+    @Published private(set) var online = true
+    @Published private(set) var serverReachable = true
+    @Published private(set) var issues: [HealthIssue] = []
+
+    let state: AppState
+    private let queue = DispatchQueue(label: "io.sms8.gateway.health")
+    private let pathQueue = DispatchQueue(label: "io.sms8.gateway.path")
+    private let pathMonitor = NWPathMonitor()
+    private var timer: Timer?
+    private var checking = false
+    private var started = false
+    private var launchedMessages = false
+    private var serverFailures = 0
+
+    init(_ s: AppState) { state = s }
+
+    /// Start live monitoring: network path, a 15 s re-check, and a re-check every
+    /// time the app comes to the front (e.g. back from System Settings).
+    func startMonitoring() {
+        guard !started else { return }
+        started = true
+        pathMonitor.pathUpdateHandler = { [weak self] p in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                let on = (p.status == .satisfied)
+                if on != self.online { self.online = on; if on { self.serverFailures = 0; self.serverReachable = true }; self.rebuild() }
+            }
+        }
+        pathMonitor.start(queue: pathQueue)
+        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in self?.refresh() }
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification,
+                                               object: nil, queue: .main) { [weak self] _ in self?.refresh() }
+        refresh()
+    }
+
+    /// Cheap check (Full Disk Access only) for the UI's fast poll.
+    func quickCheck() {
+        let fd = iMsg.fileReadable()
+        if fd != fullDisk { fullDisk = fd; rebuild() }
+    }
+
+    /// Full re-check off the main thread.
+    func refresh() {
+        guard !checking else { return }
+        checking = true
+        let paired = state.paired
+        queue.async {
+            let fd = iMsg.fileReadable()
+            var auto = Self.automationStatus(ask: false)
+            // Messages has to be running for the permission check (and for
+            // sending). Once paired, open it in the background so a closed
+            // Messages app is not mistaken for a broken gateway.
+            if auto == .messagesNotRunning && paired && !self.launchedMessages {
+                self.launchedMessages = true
+                Self.launchMessages(activate: false)
+                for _ in 0..<10 {
+                    Thread.sleep(forTimeInterval: 0.5)
+                    auto = Self.automationStatus(ask: false)
+                    if auto != .messagesNotRunning { break }
+                }
+            }
+            var acct: IMessageAccountStatus = .unknown
+            var sms = false
+            if auto == .granted { (acct, sms) = iMsg.accountStatus() }
+            DispatchQueue.main.async {
+                if acct == .ready && self.account != .ready { iMsg.resetServiceCache() }
+                self.fullDisk = fd; self.automation = auto
+                self.account = acct; self.hasSMSAccount = sms
+                self.checking = false
+                self.rebuild()
+            }
+        }
+    }
+
+    /// Shows the macOS "control Messages" prompt (only from a user click).
+    func requestAutomation() {
+        queue.async {
+            if Self.automationStatus(ask: false) == .messagesNotRunning {
+                Self.launchMessages(activate: false)
+                for _ in 0..<10 {
+                    Thread.sleep(forTimeInterval: 0.5)
+                    if Self.automationStatus(ask: false) != .messagesNotRunning { break }
+                }
+            }
+            _ = Self.automationStatus(ask: true)   // blocks until the user answers
+            DispatchQueue.main.async { self.refresh() }
+        }
+    }
+
+    /// Fed by the bridge after each tick: did any SMS8 request get an answer?
+    func recordServer(reached: Bool) {
+        if reached { serverFailures = 0 } else { serverFailures += 1 }
+        let ok = serverFailures < 2
+        if ok != serverReachable { serverReachable = ok; rebuild() }
+    }
+    func resetServer() { serverFailures = 0; if !serverReachable { serverReachable = true; rebuild() } }
+
+    private func rebuild() {
+        var out: [HealthIssue] = []
+        if !online { out.append(.make(.offline)) }
+        else if !serverReachable && state.paired { out.append(.make(.serverUnreachable)) }
+        switch automation {
+        case .denied:        out.append(.make(.automationDenied))
+        case .notDetermined: out.append(.make(.automationNeeded))
+        default: break
+        }
+        // A disconnected iMessage account while offline is just the network.
+        if automation == .granted && online {
+            switch account {
+            case .notSignedIn: out.append(.make(.notSignedIn))
+            case .turnedOff:   out.append(.make(.iMessageOff))
+            default: break
+            }
+        }
+        if (state.receiveEnabled || state.sendMode == .auto) && !fullDisk { out.append(.make(.fullDiskMissing)) }
+        if out != issues { issues = out }
+    }
+
+    /// Why sending is paused right now, or nil if messages can be sent. While
+    /// paused the bridge does not pull messages, so they stay queued in SMS8
+    /// instead of being marked Failed.
+    var sendingBlockedReason: String? {
+        if !online { return "this Mac is offline" }
+        if automation == .denied { return "SMS8 Gateway is not allowed to control Messages" }
+        if account == .notSignedIn || account == .turnedOff {
+            let smsUsable = hasSMSAccount && state.sendMode != .imessage
+            if !smsUsable { return account == .turnedOff ? "iMessage is turned off in Messages" : "Messages is not signed in to iMessage" }
+        }
+        return nil
+    }
+
+    /// Compact status string sent with the existing heartbeat call.
+    var healthCode: String { issues.isEmpty ? "ok" : issues.map { $0.id }.joined(separator: ",") }
+
+    static func automationStatus(ask: Bool) -> AutomationStatus {
+        let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.MobileSMS")
+        guard let desc = target.aeDesc else { return .unknown }
+        let st = AEDeterminePermissionToAutomateTarget(desc, AEEventClass(typeWildCard), AEEventID(typeWildCard), ask)
+        switch st {
+        case noErr:  return .granted
+        case -1744:  return .notDetermined        // errAEEventWouldRequireUserConsent
+        case -1743:  return .denied               // errAEEventNotPermitted
+        case -600:   return .messagesNotRunning   // procNotFound
+        default:     return .unknown
+        }
+    }
+
+    static func launchMessages(activate: Bool) {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.MobileSMS") else { return }
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.activates = activate
+        if !activate { cfg.hides = true }
+        DispatchQueue.main.async { NSWorkspace.shared.openApplication(at: url, configuration: cfg) { _, _ in } }
+    }
+
+    static func openSettings(_ pane: String) {
+        if let u = URL(string: "x-apple.systempreferences:\(pane)") { NSWorkspace.shared.open(u) }
     }
 }
 
 // MARK: - Bridge engine (the send/receive loop)
 final class Bridge: ObservableObject {
     let state: AppState
+    let health: HealthMonitor
     @Published var running = false
     @Published var log: [String] = []
+    @Published private(set) var pausedReason: String? = nil
     private var timer: Timer?
     private var warnedNoFDA = false
-    init(_ s: AppState) { state = s }
+    private var tickInFlight = false
+    init(_ s: AppState, _ h: HealthMonitor) { state = s; health = h }
 
     func logLine(_ s: String) {
         DispatchQueue.main.async {
@@ -658,11 +856,11 @@ final class Bridge: ObservableObject {
         guard state.paired, !running else { return }
         running = true
         if state.lastRowId == 0 { state.lastRowId = iMsg.currentMaxRowId(); state.save() }
-        logLine("● Bridge started.")
+        logLine("Bridge started.")
         tick() // immediate
         timer = Timer.scheduledTimer(withTimeInterval: 8, repeats: true) { [weak self] _ in self?.tick() }
     }
-    func stop() { running = false; timer?.invalidate(); timer = nil; logLine("■ Bridge stopped.") }
+    func stop() { running = false; timer?.invalidate(); timer = nil; pausedReason = nil; logLine("Bridge stopped.") }
 
     // True if a server reply means this device no longer exists on the account
     // (deleted from the Devices page, account reset, etc.). We detect it so the
@@ -674,11 +872,36 @@ final class Bridge: ObservableObject {
             || msg.contains("does not exist") || msg.contains("no device")
     }
 
+    /// Runs on the main thread (timer / UI). One tick at a time: a slow network
+    /// used to let ticks pile up and pull the same queue concurrently.
     func tick() {
+        guard running, !tickInFlight else { return }
+        tickInFlight = true
+        let blocked = health.sendingBlockedReason
+        if blocked != pausedReason {
+            if let b = blocked { logLine("Sending paused: \(b). Queued messages stay in SMS8 until this is fixed.") }
+            else if pausedReason != nil { logLine("Sending resumed.") }
+            pausedReason = blocked
+        }
+        let offline = !health.online
+        let healthCode = health.healthCode
         DispatchQueue.global().async {
-            // SEND
-            if let r = SMS8.post("get-messages.php", ["androidId":self.state.androidId,"userId":self.state.userId,"limit":"10"]) {
-                if self.isDeviceGone(r) { self.handleDeviceGone(); return }
+            var reached = false
+            var gone = false
+            defer {
+                DispatchQueue.main.async {
+                    self.tickInFlight = false
+                    if !offline { self.health.recordServer(reached: reached) }
+                    if gone { self.handleDeviceGone() }
+                }
+            }
+            // Offline: every request would stall ~75 s on retries. Skip the tick.
+            if offline { return }
+            // SEND (skipped while sending is blocked, so nothing is marked Failed)
+            if blocked == nil,
+               let r = SMS8.post("get-messages.php", ["androidId":self.state.androidId,"userId":self.state.userId,"limit":"10"]) {
+                reached = true
+                if self.isDeviceGone(r) { gone = true; return }
                 let msgs = ((r["data"] as? [String:Any])?["messages"] as? [[String:Any]]) ?? (r["messages"] as? [[String:Any]]) ?? []
                 for m in msgs {
                     let mid = "\(m["ID"] ?? m["id"] ?? "")"
@@ -691,15 +914,21 @@ final class Bridge: ObservableObject {
                     let chatGuid = guidRaw.isEmpty ? nil : guidRaw
                     let (ok, info) = Messaging.send(self.state, to: to, body: body,
                                                     channel: channel, chatGuid: chatGuid)
-                    _ = SMS8.post("report-status.php", ["androidId":self.state.androidId,"userId":self.state.userId,"messageId":mid,"status": ok ? "Sent":"Failed"])
+                    let rep = SMS8.post("report-status.php", ["androidId":self.state.androidId,"userId":self.state.userId,"messageId":mid,"status": ok ? "Sent":"Failed"])
                     self.logLine(ok ? "→ sent to \(to) via \(info)" : "→ send FAILED \(to): \(info)")
+                    if rep == nil { self.logLine("Warning: could not report the status of message \(mid) to SMS8 (network).") }
                 }
+                // A permission/sign-in failure during sending: re-check right away.
+                if !msgs.isEmpty { DispatchQueue.main.async { self.health.refresh() } }
             }
             // RECEIVE — only when the user enabled it.
             if self.state.receiveEnabled { self.receiveTick() }
-            // heartbeat
-            let hb = SMS8.post("heartbeat.php", ["androidId":self.state.androidId,"userId":self.state.userId])
-            if self.isDeviceGone(hb) { self.handleDeviceGone() }
+            // Heartbeat (existing call). Also carries this Mac's health so the
+            // dashboard can show why a device is not delivering.
+            let hb = SMS8.post("heartbeat.php", ["androidId":self.state.androidId,"userId":self.state.userId,
+                                                 "healthStatus": healthCode])
+            if hb != nil { reached = true }
+            if self.isDeviceGone(hb) { gone = true }
         }
     }
 
@@ -708,7 +937,8 @@ final class Bridge: ObservableObject {
     // failed polls (which looked like "unreachable").
     private func handleDeviceGone() {
         DispatchQueue.main.async {
-            self.logLine("⚠︎ This Mac is no longer paired to your account. Please pair again.")
+            guard self.state.paired else { return }
+            self.logLine("Warning: this Mac is no longer paired to your account. Please pair again.")
             self.stop()
             self.state.paired = false
             self.state.deviceId = ""; self.state.apiKey = ""; self.state.userId = ""; self.state.email = ""
@@ -728,46 +958,41 @@ final class Bridge: ObservableObject {
         let fmt = DateFormatter()
         fmt.locale = Locale(identifier: "en_US_POSIX")
         fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"   // Z = numeric offset like +0000
-        func forward(number: String, text: String, sentTs: TimeInterval) {
+        // Returns false when SMS8 did not answer, so the caller keeps the row
+        // and retries next tick (previously the cursor advanced anyway and the
+        // reply was lost for good whenever the network blipped).
+        func forward(number: String, text: String, sentTs: TimeInterval) -> Bool {
             let payload = [["number":number,"message":text,
                 "sentDate":fmt.string(from: Date(timeIntervalSince1970: sentTs)),
                 "receivedDate":fmt.string(from: Date())]]
-            if let data = try? JSONSerialization.data(withJSONObject: payload), let js = String(data: data, encoding: .utf8) {
-                _ = SMS8.post("receive-message.php", ["androidId":state.androidId,"userId":state.userId,"messages":js])
-                logLine("← recv from \(number): \(text.prefix(40))")
+            guard let data = try? JSONSerialization.data(withJSONObject: payload),
+                  let js = String(data: data, encoding: .utf8) else { return true }  // unencodable: skip it
+            guard SMS8.post("receive-message.php", ["androidId":state.androidId,"userId":state.userId,"messages":js]) != nil else {
+                logLine("Warning: could not deliver a reply from \(number) to SMS8. Will retry.")
+                return false
             }
+            logLine("← recv from \(number): \(text.prefix(40))")
+            return true
         }
-        switch state.engine ?? .thisMac {
-        case .thisMac:
-            // Reads chat.db (needs Full Disk Access).
-            guard iMsg.canReadDB() else {
-                // Surface the real blocker ONCE per run instead of silently reading nothing.
-                if !warnedNoFDA {
-                    warnedNoFDA = true
-                    logLine("⚠︎ Can't read incoming messages — Full Disk Access is OFF. Grant it in Settings → Receiving, then reopen the app.")
-                }
-                return
+        // Reads chat.db (needs Full Disk Access).
+        guard iMsg.canReadDB() else {
+            // Surface the real blocker ONCE per run instead of silently reading nothing.
+            if !warnedNoFDA {
+                warnedNoFDA = true
+                logLine("Warning: can't read incoming messages because Full Disk Access is off. Grant it in Settings, then relaunch the app.")
             }
-            warnedNoFDA = false
-            // First successful read: anchor at current max so we don't replay history.
-            if state.lastRowId == 0 { state.lastRowId = iMsg.currentMaxRowId(); state.save() }
-            let rows = iMsg.newInbound(since: state.lastRowId)
-            for (rid, handle, text, ts) in rows where !handle.isEmpty {
-                forward(number: handle, text: text, sentTs: TimeInterval(ts))
-                state.lastRowId = rid
-            }
-            if !rows.isEmpty { state.save() }
-        case .bluebubbles:
-            // Polls BlueBubbles; no Full Disk Access needed. lastRowId holds a ms cursor.
-            let cursor = state.lastRowId
-            let rows = BlueBubbles.fetchInbound(base: state.bbURL, password: state.bbPassword, afterMs: cursor)
-                .sorted { $0.ms < $1.ms }
-            for r in rows where r.ms > cursor {
-                forward(number: r.address, text: r.text, sentTs: TimeInterval(r.ms) / 1000.0)
-                state.lastRowId = r.ms
-            }
-            if !rows.isEmpty { state.save() }
+            return
         }
+        warnedNoFDA = false
+        // First successful read: anchor at current max so we don't replay history.
+        if state.lastRowId == 0 { state.lastRowId = iMsg.currentMaxRowId(); state.save() }
+        let rows = iMsg.newInbound(since: state.lastRowId)
+        var advanced = false
+        for (rid, handle, text, ts) in rows where !handle.isEmpty {
+            if !forward(number: handle, text: text, sentTs: TimeInterval(ts)) { break }
+            state.lastRowId = rid; advanced = true
+        }
+        if advanced { state.save() }
     }
 }
 
@@ -806,17 +1031,17 @@ struct HelpTip: View {
 struct RootView: View {
     @StateObject var state: AppState
     @StateObject var bridge: Bridge
+    @StateObject var health: HealthMonitor
     @State private var tab: Tab = .connection
-    @State private var fullDisk = iMsg.fileReadable()
+    var fullDisk: Bool { health.fullDisk }
+    @State private var presentedIssue: HealthIssue? = nil   // the issue dialog on screen
+    @State private var dismissedIssues: Set<String> = []     // "Later" for this session
     @State private var code = ""
     @State private var pairing = false
     @State private var pairMsg = ""
     @State private var testTo = ""
     @State private var testResult = ""
     @State private var sending = false
-    @State private var showEnginePicker = false
-    @State private var accessibility = iMsg.hasAccessibility()
-    @State private var bbTest = ""
     @State private var wizardDismissed = false     // user chose to view the full app
     @State private var testPassed = false           // first successful test send
     @State private var pairPhase = "Connecting…"     // live label during pairing
@@ -825,8 +1050,10 @@ struct RootView: View {
 
     init() {
         let s = AppState()
+        let h = HealthMonitor(s)
         _state = StateObject(wrappedValue: s)
-        _bridge = StateObject(wrappedValue: Bridge(s))
+        _health = StateObject(wrappedValue: h)
+        _bridge = StateObject(wrappedValue: Bridge(s, h))
     }
 
     // Show the guided single-page wizard until the bridge is actually running.
@@ -843,15 +1070,15 @@ struct RootView: View {
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
             // Keep permission state live so the checklist reflects reality as the
             // user flips toggles in System Settings (no need to reopen the app).
-            let fd = iMsg.fileReadable(); if fd != fullDisk { fullDisk = fd }
-            let ax = iMsg.hasAccessibility(); if ax != accessibility { accessibility = ax }
+            health.quickCheck()
             // Self-heal: if things just became runnable and auto-start is on, start.
             if state.paired && state.autoStart && canRun && !bridge.running { bridge.start() }
         }
         .onAppear {
             SMS8.warmUp()   // prime the network so the first request isn't a cold-start "unreachable"
-            // This Mac only (no remote-server option to configure).
-            if state.engine != .thisMac { state.engine = .thisMac; state.save() }
+            // Detect Messages sign-in, Automation, Full Disk Access and network
+            // now, then every 15 s and whenever the app comes to the front.
+            health.startMonitoring()
             // Auto-start the bridge on launch when paired, set up, and the user
             // hasn't explicitly turned it off. Keeps it running by default.
             if state.paired && state.autoStart && canRun && !bridge.running {
@@ -872,6 +1099,76 @@ struct RootView: View {
         .onChange(of: testPassed) { _, passed in
             if passed { withAnimation { wizPageState = 2 } }
         }
+        // Problems found by the health monitor open a dialog with steps and a
+        // button to the right System Settings pane. Only once setup is done
+        // (during the wizard the Permissions step shows the same status inline),
+        // and once per problem per session after the user clicks Later.
+        .onChange(of: health.issues) { _, issues in presentNextIssue(issues) }
+        .onChange(of: state.paired) { _, _ in presentNextIssue(health.issues) }
+        .sheet(item: $presentedIssue) { issue in
+            IssueSheet(issue: issue, health: health,
+                       onAction: { performPrimary(issue.kind) },
+                       onSecondary: { performSecondary(issue.kind) },
+                       onLater: { dismissedIssues.insert(issue.id); presentedIssue = nil })
+        }
+    }
+
+    func presentNextIssue(_ issues: [HealthIssue]) {
+        let ids = Set(issues.map { $0.id })
+        dismissedIssues = dismissedIssues.intersection(ids)   // a problem that comes back is shown again
+        if let cur = presentedIssue {
+            if !ids.contains(cur.id) { presentedIssue = nil } else { return }
+        }
+        guard state.paired else { return }
+        // Wait for the sheet to finish closing before opening the next one.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            guard presentedIssue == nil else { return }
+            presentedIssue = health.issues.first { !dismissedIssues.contains($0.id) }
+        }
+    }
+
+    func performPrimary(_ k: HealthIssue.Kind) {
+        switch k {
+        case .offline:           HealthMonitor.openSettings("com.apple.preference.network")
+        case .serverUnreachable: health.resetServer(); bridge.tick()
+        case .automationNeeded:  health.requestAutomation()
+        case .automationDenied:  HealthMonitor.openSettings("com.apple.preference.security?Privacy_Automation")
+        case .notSignedIn, .iMessageOff: HealthMonitor.launchMessages(activate: true)
+        case .fullDiskMissing:   openFullDisk()
+        }
+    }
+    func performSecondary(_ k: HealthIssue.Kind) {
+        switch k {
+        case .serverUnreachable: NSWorkspace.shared.open(URL(string: "https://app.sms8.io")!)
+        case .fullDiskMissing:   relaunchApp()
+        default: health.refresh()
+        }
+    }
+
+    // Persistent list of current problems (stays after the dialog is closed).
+    @ViewBuilder var issueBanner: some View {
+        if !health.issues.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(health.issues) { issue in
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(issue.blocksSending ? .red : .orange).font(.system(size: 14))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(issue.title).font(.system(size: 12.5, weight: .semibold))
+                            Text(issue.blocksSending ? "Sending is paused until this is fixed." : "Some features are limited until this is fixed.")
+                                .font(.system(size: 11)).foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("How to fix") { presentedIssue = issue }
+                            .buttonStyle(.borderedProminent).tint(BRAND).controlSize(.small)
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.orange.opacity(0.08))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.3)))
+            .cornerRadius(10)
+        }
     }
 
     // ── Tabbed layout (shown after setup / when running) ──
@@ -883,12 +1180,15 @@ struct RootView: View {
                 topBar
                 Divider()
                 ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                    issueBanner
                     Group {
                         switch tab {
                         case .connection: connectionTab
                         case .settings:   settingsTab
                         case .activity:   activityTab
                         }
+                    }
                     }.padding(22).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -1074,14 +1374,14 @@ struct RootView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Here’s what SMS8 Gateway can access and why. Automation is required to send; Full Disk Access lets it receive replies. You can grant these now or later in Settings.")
                 .font(.system(size: 12)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
-            if (state.engine ?? .thisMac) == .thisMac { permissionsPanel }
-            else { bluebubblesPanel }
+            permissionsPanel
         }
     }
 
     // Step 3 body — test then start. Start button appears after a successful test.
     var startStepBody: some View {
         VStack(alignment: .leading, spacing: 14) {
+            issueBanner
             if bridge.running {
                 statusBanner()
                 if !bridge.log.isEmpty {
@@ -1128,48 +1428,6 @@ struct RootView: View {
                 }
             }
         }
-    }
-
-    // ── First-run engine picker ──
-    var enginePicker: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 12) {
-                appIcon.frame(width: 40, height: 40)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("How should this Mac send messages?").font(.system(size: 17, weight: .bold))
-                    Text("You can change this later in Settings.").font(.system(size: 12)).foregroundColor(.secondary)
-                }
-            }
-            engineOption(.thisMac, title: "Use this Mac — iMessage",
-                desc: "Send and receive iMessage through the Messages app on this Mac. Works great for Apple users (iPhone, iPad, Mac). SMS to Android is best-effort only — Apple restricts scripted SMS, so for reliable SMS and group chats use a hosted Mac below.")
-            engineOption(.bluebubbles, title: "Use a remote Mac — iMessage + SMS",
-                desc: "Connect to a remote Mac server that handles everything for you. Reliable iMessage AND SMS both ways, plus group chats. Nothing extra is needed on this machine. Best for always-on use and higher volume.")
-            HStack {
-                Spacer()
-                Button("Continue") {
-                    if state.engine == nil { state.engine = .thisMac }
-                    state.save(); showEnginePicker = false
-                }.buttonStyle(.borderedProminent).tint(BRAND).disabled(state.engine == nil)
-            }
-        }
-        .padding(26).frame(width: 520)
-    }
-    func engineOption(_ e: SendEngine, title: String, desc: String) -> some View {
-        Button { state.engine = e } label: {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: state.engine == e ? "largecircle.fill.circle" : "circle")
-                    .foregroundColor(state.engine == e ? BRAND : .secondary).font(.system(size: 18))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.system(size: 14, weight: .semibold))
-                    Text(desc).font(.system(size: 12)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-            }
-            .padding(14)
-            .background(state.engine == e ? BRAND.opacity(0.08) : Color.primary.opacity(0.03))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.engine == e ? BRAND.opacity(0.5) : Color.primary.opacity(0.1)))
-            .cornerRadius(10)
-        }.buttonStyle(.plain)
     }
 
     // ── Sidebar ──
@@ -1237,19 +1495,32 @@ struct RootView: View {
     struct Check: Identifiable { let id = UUID(); let ok: Bool; let text: String; let action: (() -> Void)?; let actionLabel: String?; let blocking: Bool }
     var checks: [Check] {
         var out: [Check] = []
-        let eng = state.engine ?? .thisMac
         out.append(Check(ok: state.paired, text: state.paired ? "Linked to your SMS8 account" : "Not linked yet — enter your pairing code", action: nil, actionLabel: nil, blocking: true))
-        if eng == .thisMac {
-            out.append(Check(ok: true, text: "iMessage sending is ready (Apple contacts)", action: nil, actionLabel: nil, blocking: false))
+        do {
+            // Real status instead of an always-green "ready" line. Advisory, so
+            // the bridge still runs (and reports its health) while it is fixed.
+            switch health.automation {
+            case .denied:
+                out.append(Check(ok: false, text: "Not allowed to control Messages, so nothing can be sent", action: { performPrimary(.automationDenied) }, actionLabel: "Open Settings", blocking: false))
+            case .notDetermined:
+                out.append(Check(ok: false, text: "Permission to control Messages not given yet", action: { performPrimary(.automationNeeded) }, actionLabel: "Allow", blocking: false))
+            default: break
+            }
+            switch health.account {
+            case .ready:
+                out.append(Check(ok: true, text: "Messages is signed in to iMessage", action: nil, actionLabel: nil, blocking: false))
+            case .notSignedIn, .turnedOff:
+                out.append(Check(ok: false, text: health.account == .turnedOff ? "iMessage is turned off in Messages" : "Messages is not signed in to iMessage", action: { HealthMonitor.launchMessages(activate: true) }, actionLabel: "Open Messages", blocking: false))
+            default: break
+            }
+            if !health.online {
+                out.append(Check(ok: false, text: "This Mac is offline", action: { performPrimary(.offline) }, actionLabel: "Network Settings", blocking: false))
+            }
             if state.receiveEnabled {
                 // Advisory: without FDA, receiving is off, but sending still works.
                 out.append(Check(ok: fullDisk, text: fullDisk ? "Full Disk Access granted (receiving works)" : "Full Disk Access off — incoming replies won't sync",
                     action: { openFullDisk() }, actionLabel: fullDisk ? nil : "Allow", blocking: false))
             }
-        } else {
-            let configured = !state.bbURL.isEmpty && !state.bbPassword.isEmpty
-            out.append(Check(ok: configured, text: configured ? "Remote server configured" : "Enter your remote server URL and password in Settings",
-                action: configured ? nil : { tab = .settings }, actionLabel: configured ? nil : "Open Settings", blocking: true))
         }
         return out
     }
@@ -1265,7 +1536,10 @@ struct RootView: View {
         let perfect = allGood
         // running > runnable-with-advisory > ready > blocked
         let (tint, icon, title, sub): (Color, String, String, String)
-        if live {
+        if live, let why = bridge.pausedReason ?? health.sendingBlockedReason {
+            tint = .red; icon = "pause.circle.fill"; title = "Running, but sending is paused"
+            sub = "Sending is paused because " + why + ". Queued messages stay in SMS8 and go out once this is fixed."
+        } else if live {
             tint = .green; icon = "checkmark.circle.fill"; title = "Everything is running"
             sub = perfect ? "Your SMS8 messages are flowing through this Mac."
                           : "Running. One optional permission is still off (see Setup below)."
@@ -1322,11 +1596,7 @@ struct RootView: View {
     // Permissions step is "ready" when the engine's own requirements are met.
     // This Mac: iMessage works out of the box, so it's ready immediately
     // (Accessibility/Full Disk Access are optional and handled inline).
-    // Remote Mac: the server URL + password must be filled in.
-    var permissionsReady: Bool {
-        if (state.engine ?? .thisMac) == .thisMac { return true }
-        return !state.bbURL.isEmpty && !state.bbPassword.isEmpty
-    }
+    var permissionsReady: Bool { true }
 
     // New order: 1 Permissions → 2 Connect → 3 Test & start.
     var onboardingStep: Int {
@@ -1558,7 +1828,7 @@ struct RootView: View {
             DispatchQueue.main.async {
                 sending = false
                 testResult = ok ? "✓ Sent via \(info)." : "✗ Not delivered: \(info)"
-                if ok { testPassed = true }
+                if ok { testPassed = true } else { health.refresh() }
             }
         }
     }
@@ -1571,9 +1841,32 @@ struct RootView: View {
                 HelpTip(text: "macOS protects Messages and your message history. Each permission below shows whether it’s already allowed, and exactly what it’s for. Grant only what you use.")
             }
             // 1) Automation — required for sending.
-            permRow2(status: .allowed, name: "Automation → Messages",
+            permRow2(status: automationPerm, name: "Automation → Messages",
                      tag: "Required",
-                     why: "Lets SMS8 Gateway send iMessage through the Messages app. macOS asks you to Allow the first time it sends.")
+                     why: automationWhy) {
+                switch health.automation {
+                case .notDetermined:
+                    Button("Allow access") { performPrimary(.automationNeeded) }.buttonStyle(.borderedProminent).tint(BRAND).controlSize(.small)
+                case .denied:
+                    Button("Open Automation Settings") { performPrimary(.automationDenied) }.buttonStyle(.borderedProminent).tint(BRAND).controlSize(.small)
+                    Button("Re-check") { health.refresh() }.buttonStyle(.bordered).controlSize(.small)
+                case .messagesNotRunning, .unknown:
+                    Button("Open Messages") { HealthMonitor.launchMessages(activate: true); DispatchQueue.main.asyncAfter(deadline: .now() + 2) { health.refresh() } }
+                        .buttonStyle(.bordered).controlSize(.small)
+                case .granted: EmptyView()
+                }
+            }
+            // iMessage account in Messages.app (only knowable once Automation is allowed).
+            if health.automation == .granted {
+                permRow2(status: health.account == .ready ? .allowed : (health.account == .connecting || health.account == .unknown ? .unknown : .needed),
+                         name: "Messages signed in to iMessage", tag: "Required",
+                         why: iMessageWhy) {
+                    if health.account != .ready {
+                        Button("Open Messages") { HealthMonitor.launchMessages(activate: true) }.buttonStyle(.borderedProminent).tint(BRAND).controlSize(.small)
+                        Button("Re-check") { health.refresh() }.buttonStyle(.bordered).controlSize(.small)
+                    }
+                }
+            }
             // 2) Full Disk Access — for receiving replies.
             permRow2(status: !state.receiveEnabled ? .optional : (fullDisk ? .allowed : .needed),
                      name: "Full Disk Access",
@@ -1584,19 +1877,46 @@ struct RootView: View {
                 // Receiving toggle lives here so the user can enable it (and FDA) inline.
                 Toggle(isOn: Binding(get: { state.receiveEnabled }, set: { on in
                     state.receiveEnabled = on; state.save()
-                    if on { fullDisk = iMsg.fileReadable(); if !fullDisk { openFullDisk() } }
+                    if on { health.quickCheck(); if !fullDisk { openFullDisk() } }
                 })) {
                     Text("Receive replies").font(.system(size: 12))
                 }.toggleStyle(.switch).tint(BRAND).controlSize(.mini)
                 if state.receiveEnabled {
                     Button("Open settings") { openFullDisk() }.buttonStyle(.borderedProminent).tint(BRAND).controlSize(.small)
-                    Button("Re-check") { fullDisk = iMsg.fileReadable() }.buttonStyle(.bordered).controlSize(.small)
+                    Button("Re-check") { health.refresh() }.buttonStyle(.bordered).controlSize(.small)
+                    if !fullDisk { Button("Relaunch app") { relaunchApp() }.buttonStyle(.bordered).controlSize(.small) }
                 }
             }
         }
     }
 
-    enum PermStatus { case allowed, needed, optional, notNeeded }
+    enum PermStatus { case allowed, needed, optional, notNeeded, unknown }
+
+    var automationPerm: PermStatus {
+        switch health.automation {
+        case .granted: return .allowed
+        case .notDetermined, .denied: return .needed
+        default: return .unknown
+        }
+    }
+    var automationWhy: String {
+        switch health.automation {
+        case .granted:       return "Allowed. SMS8 Gateway can send iMessage and SMS through the Messages app."
+        case .notDetermined: return "Lets SMS8 Gateway send through the Messages app. Click Allow access, then OK in the macOS prompt."
+        case .denied:        return "Turned off, so nothing can be sent. Open Automation Settings, expand SMS8 Gateway and turn on Messages."
+        case .messagesNotRunning: return "Messages is not open, so this can't be checked yet. Open Messages and this updates on its own."
+        case .unknown:       return "Lets SMS8 Gateway send iMessage through the Messages app. Checking..."
+        }
+    }
+    var iMessageWhy: String {
+        switch health.account {
+        case .ready:       return "Messages is signed in and connected to iMessage."
+        case .connecting:  return "Messages is connecting to iMessage. This usually takes a few seconds."
+        case .notSignedIn: return "Messages has no working iMessage account. Open Messages, choose Messages > Settings > iMessage and sign in with your Apple ID (Apple Account), then turn on Enable this account."
+        case .turnedOff:   return "The iMessage account is disabled. Open Messages, choose Messages > Settings > iMessage and turn on Enable this account."
+        case .unknown:     return "Checking the Messages account..."
+        }
+    }
 
     // A permission row with a clear status badge, a purpose line, and actions.
     func permRow2<C: View>(status: PermStatus, name: String, tag: String, why: String,
@@ -1607,6 +1927,7 @@ struct RootView: View {
             case .needed:    return ("exclamationmark.circle.fill", .orange, "Needs allowing")
             case .optional:  return ("circle", .secondary, "Optional — set later")
             case .notNeeded: return ("minus.circle", .secondary, "Not needed")
+            case .unknown:   return ("questionmark.circle", .secondary, "Checking")
             }
         }()
         return HStack(alignment: .top, spacing: 10) {
@@ -1630,38 +1951,12 @@ struct RootView: View {
         .cornerRadius(8)
     }
 
-    // BlueBubbles server config panel — reused in wizard + settings.
-    var bluebubblesPanel: some View {
-        panel {
-            Text("Remote server").font(.system(size: 14, weight: .semibold))
-            TextField("https://your-server:1234", text: Binding(get: { state.bbURL }, set: { state.bbURL = $0; state.save() }))
-                .textFieldStyle(.roundedBorder)
-            SecureField("Server password", text: Binding(get: { state.bbPassword }, set: { state.bbPassword = $0; state.save() }))
-                .textFieldStyle(.roundedBorder)
-            HStack {
-                Button("Test connection") {
-                    bbTest = "Testing…"
-                    let (u,p) = (state.bbURL, state.bbPassword)
-                    DispatchQueue.global().async {
-                        let (ok, info) = BlueBubbles.ping(base: u, password: p)
-                        DispatchQueue.main.async { bbTest = ok ? "✓ Connected to the remote server." : "✗ \(info)" }
-                    }
-                }.buttonStyle(.bordered)
-                if !bbTest.isEmpty {
-                    Text(bbTest).font(.system(size: 12)).foregroundColor(bbTest.hasPrefix("✓") ? .green : .red)
-                }
-            }
-            Text("Enter the URL and password of your SMS8 remote Mac server. Contact SMS8 if you need one set up.")
-                .font(.system(size: 11)).foregroundColor(.secondary)
-        }
-    }
-
     // "Send as" picker — Auto / iMessage only / SMS only, for BOTH engines.
     // This Mac can now send SMS via a paired iPhone (Text Message Forwarding),
     // so it gets the full choice. Auto needs Full Disk Access to detect an
     // iMessage failure and fall back to SMS — we surface that requirement.
     @ViewBuilder var sendAsPanel: some View {
-        let thisMac = (state.engine ?? .thisMac) == .thisMac
+        let thisMac = true
         panel {
             HStack(spacing: 6) {
                 Text("Send as").font(.system(size: 14, weight: .semibold))
@@ -1684,8 +1979,7 @@ struct RootView: View {
     // ── SETTINGS TAB ──
     var settingsTab: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if (state.engine ?? .thisMac) == .bluebubbles { bluebubblesPanel }
-            else { permissionsPanel }
+            permissionsPanel
 
             sendAsPanel
             // Startup (shared)
@@ -1711,15 +2005,15 @@ struct RootView: View {
                 }
                 Toggle(isOn: Binding(get: { state.receiveEnabled }, set: { on in
                     state.receiveEnabled = on; state.save()
-                    if on && (state.engine ?? .thisMac) == .thisMac { fullDisk = iMsg.fileReadable(); if !fullDisk { openFullDisk() } }
+                    if on { health.quickCheck(); if !fullDisk { openFullDisk() } }
                 })) {
                     Text("Receive incoming messages into SMS8").font(.system(size: 13))
                 }.toggleStyle(.switch).tint(BRAND)
                 Text(state.receiveEnabled
                      ? "On — replies flow back into your SMS8 inbox and webhooks."
-                     : ((state.engine ?? .thisMac) == .thisMac ? "Off — this Mac only sends. No Full Disk Access required." : "Off — send only."))
+                     : "Off — this Mac only sends. No Full Disk Access required.")
                     .font(.system(size: 11)).foregroundColor(.secondary)
-                if state.receiveEnabled && (state.engine ?? .thisMac) == .thisMac && !fullDisk {
+                if state.receiveEnabled && !fullDisk {
                     Label("Full Disk Access not granted — receiving won't work until you allow it and reopen the app.", systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 11)).foregroundColor(.orange)
                 }
@@ -1822,7 +2116,7 @@ struct RootView: View {
             let r = SMS8.post("pairing-code-claim.php", [
                 "code": entered,
                 "androidId": state.androidId, "model": "Mac — iMessage",
-                "appVersion": "i10.0.53", "androidVersion": "macOS"])
+                "appVersion": "i10.0.54", "androidVersion": "macOS"])
             // Ensure the progress is visible for at least ~1.4s so it reads as
             // "setting up", not an instant flash.
             let elapsed = Date().timeIntervalSince(startedAt)
@@ -1843,7 +2137,9 @@ struct RootView: View {
                 pairing = false
                 // No network / no response
                 if r == nil {
-                    pairMsg = "✗ Couldn’t reach SMS8. Check your internet connection and try again."
+                    pairMsg = health.online
+                        ? "✗ This Mac is online but SMS8 did not answer. Check that a VPN, firewall or content filter is not blocking app.sms8.io, then try again. Your code is still valid for a few minutes."
+                        : "✗ This Mac is offline. Connect to Wi-Fi or Ethernet, then enter the code again."
                     return
                 }
                 // Server returned an error — map the common cases to clear guidance.
@@ -1855,17 +2151,79 @@ struct RootView: View {
                     msg = "That code was already used. Generate a new one on the Devices page."
                 } else if raw.contains("not found") || raw.contains("invalid") || raw.contains("exist") {
                     msg = "That code isn’t valid. Double-check it or get a new one."
-                } else if raw.contains("limit") || raw.contains("device") {
+                } else if raw.contains("limit") || raw.contains("maximum") {
                     msg = "This account already has the maximum number of devices. Remove a device in your SMS8 account, then retry."
                 } else if !raw.isEmpty {
                     msg = raw.prefix(1).uppercased() + raw.dropFirst()
                 } else {
-                    msg = "Couldn’t connect. The code may be wrong or expired — get a fresh one."
+                    msg = "That code did not work. It may be mistyped or expired. Codes are 6 letters and numbers, shown on the Devices page under Connect a device."
                 }
                 pairMsg = "✗ \(msg)"
                 code = ""
             }
         }
+    }
+}
+
+// MARK: - Issue dialog
+// A native sheet for one problem: what is wrong, numbered steps, and a button
+// that opens the exact System Settings pane (or Messages). Closes by itself
+// once the health monitor sees the problem is gone.
+struct IssueSheet: View {
+    let issue: HealthIssue
+    @ObservedObject var health: HealthMonitor
+    let onAction: () -> Void
+    let onSecondary: () -> Void
+    let onLater: () -> Void
+
+    var primaryLabel: String {
+        switch issue.kind {
+        case .offline:           return "Open Network Settings"
+        case .serverUnreachable: return "Retry now"
+        case .automationNeeded:  return "Allow access"
+        case .automationDenied:  return "Open Automation Settings"
+        case .notSignedIn, .iMessageOff: return "Open Messages"
+        case .fullDiskMissing:   return "Open Full Disk Access"
+        }
+    }
+    var secondaryLabel: String {
+        switch issue.kind {
+        case .serverUnreachable: return "Open SMS8 Dashboard"
+        case .fullDiskMissing:   return "Relaunch app"
+        default:                 return "Check again"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 28)).foregroundColor(issue.blocksSending ? .red : .orange)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(issue.title).font(.system(size: 16, weight: .bold))
+                    Text(issue.summary).font(.system(size: 12)).foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(issue.steps.enumerated()), id: \.offset) { i, step in
+                    HStack(alignment: .top, spacing: 10) {
+                        Text("\(i + 1).").font(.system(size: 12.5, weight: .semibold)).frame(width: 18, alignment: .trailing)
+                        Text(step).font(.system(size: 12.5)).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.primary.opacity(0.04)).cornerRadius(8)
+            HStack {
+                Button("Later") { onLater() }.keyboardShortcut(.cancelAction)
+                Spacer()
+                Button(secondaryLabel) { onSecondary() }.buttonStyle(.bordered)
+                Button(primaryLabel) { onAction() }
+                    .buttonStyle(.borderedProminent).tint(BRAND).keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(22).frame(width: 480)
     }
 }
 

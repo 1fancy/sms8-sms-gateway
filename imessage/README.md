@@ -17,10 +17,47 @@ Full product page: **https://sms8.io/send-imessage-api**
 
 ## Download and install
 
-1. **[Download SMS8-Gateway-Installer.dmg](./SMS8-Gateway-Installer.dmg)** (macOS Ventura 13 or later).
+Get it from the **Mac App Store** (search "SMS8 Gateway"), or download it directly:
+
+1. **[Download SMS8-Gateway-Installer.dmg](./SMS8-Gateway-Installer.dmg)** (macOS Sonoma 14 or later). A zip is also on the [Releases page](https://github.com/1fancy/sms8-sms-gateway/releases).
 2. Open the DMG and drag **SMS8 Gateway** to Applications.
-3. Open the app, enter the 6-character pairing code from your [SMS8 Devices page](https://app.sms8.io/devices).
-4. Grant the two macOS permissions it asks for, send a test, start the bridge.
+3. Open the app once (see "First open" below).
+4. Enter the 6-character pairing code from your [SMS8 Devices page](https://app.sms8.io/devices).
+5. Allow the macOS permissions it asks for, send a test, start the bridge.
+
+### First open of the direct download
+
+The direct download is not notarized by Apple, so the first time you open it macOS says **"Apple could not verify SMS8 Gateway is free of malware"** and only offers **Done** or **Move to Trash**. Click **Done**, then allow it once:
+
+**macOS 15 Sequoia and later**
+
+1. Open **System Settings**, then **Privacy & Security**.
+2. Scroll down to the **Security** section. You will see "SMS8 Gateway was blocked to protect your Mac."
+3. Click **Open Anyway**, then enter your Mac password.
+4. In the next dialog, click **Open Anyway** again.
+
+The Open Anyway button stays there for about an hour after the blocked attempt. If it is gone, double-click the app again and repeat.
+
+**macOS 14 Sonoma**
+
+1. In Finder, open **Applications**.
+2. Right-click (or Control-click) **SMS8 Gateway** and choose **Open**.
+3. Click **Open** in the dialog.
+
+You can also use System Settings, Privacy & Security, Open Anyway, as on macOS 15.
+
+After the first open, the app starts normally. Prefer no warning at all? Install from the Mac App Store.
+
+### When something is not set up
+
+SMS8 Gateway checks its setup at launch and every few seconds after. If something blocks it, a window explains what to do, with a button that opens the right place:
+
+- **Messages is not signed in to iMessage, or iMessage is off**: Open Messages, then Messages, Settings, iMessage, sign in with your Apple ID and turn on Enable this account.
+- **Not allowed to control Messages**: System Settings, Privacy & Security, Automation, SMS8 Gateway, turn on Messages.
+- **Full Disk Access is off** (needed to receive replies and for SMS fallback): System Settings, Privacy & Security, Full Disk Access, turn on SMS8 Gateway, then relaunch the app.
+- **This Mac is offline, or SMS8 can't be reached**: messages wait in your SMS8 account and are sent once the connection is back.
+
+While sending is blocked, the app does not pull messages, so they stay queued in SMS8 instead of being marked Failed. Sending resumes on its own once the problem is fixed.
 
 No SMS8 account yet? [Create one free](https://app.sms8.io/register).
 
@@ -42,7 +79,9 @@ The app is a single SwiftUI file, compiled without Xcode:
 
 ```bash
 cd imessage
-./build.sh        # runs: swiftc -O -parse-as-library main.swift ...
+./build.sh                          # compile check: swiftc -O -parse-as-library main.swift ...
+./build-direct.sh 10.0.54 100061    # direct download: ad-hoc signed .app, zip (ditto) and DMG in dist/
+./build-mas.sh "<template .app>" 100061   # Mac App Store .pkg (needs the NEXT LABS certificates)
 ```
 
 See [`main.swift`](./main.swift) for the full source. It uses:
@@ -55,7 +94,7 @@ See [`main.swift`](./main.swift) for the full source. It uses:
 - **iMessage** reaches Apple users (iPhone, iPad, Mac) as blue bubbles. Works on any Mac signed into an Apple ID.
 - **SMS to Android** is sent as a green text message through a **paired iPhone** (same Apple ID, Text Message Forwarding on). The Mac has no SIM of its own, so the iPhone relays the SMS over its carrier. **Auto** mode uses this automatically when iMessage can't deliver.
 - **No iPhone attached?** Use **iMessage only** on the Mac, and the [SMS8 Android app](https://sms8.io/android-sms-gateway) for SMS — same account, same inbox.
-- **Group chats, voice notes and RCS** require a hosted-Mac / BlueBubbles setup (advanced).
+- **Group chats:** sending into an existing group conversation works; creating new groups, voice notes and RCS are not supported.
 
 ## SMS8 vs other iMessage APIs
 

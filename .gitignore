@@ -25,3 +25,8 @@ Thumbs.db
 # Dependencies (we don't ship a vendor — the server reuses app.sms8.io/vendor)
 vendor/
 node_modules/
+
+# SMS8 Gateway build output
+imessage/dist/
+imessage/SMS8iMessage*
+imessage/SMS8-Gateway-MAS.pkg
