@@ -9,7 +9,7 @@ INST="3rd Party Mac Developer Installer: NEXT LABS LLC (7MMY55WK78)"
 # Universal binary, always this Mac (no remote engine)
 for a in arm64 x86_64; do
   swiftc -O -parse-as-library -target $a-apple-macos14 main.swift \
-    -framework SwiftUI -framework AppKit -framework Foundation -lsqlite3 -o SMS8iMessage-$a
+    -framework SwiftUI -framework AppKit -framework Foundation -framework AuthenticationServices -lsqlite3 -o SMS8iMessage-$a
 done
 lipo -create SMS8iMessage-arm64 SMS8iMessage-x86_64 -output SMS8iMessage
 cp SMS8iMessage "$APP/Contents/MacOS/SMS8iMessage"

@@ -24,7 +24,7 @@ rm -rf "$OUT"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Universal binary (Apple silicon + Intel)
 for a in arm64 x86_64; do
   swiftc -O -parse-as-library -target $a-apple-macos14 main.swift \
-    -framework SwiftUI -framework AppKit -framework Foundation -lsqlite3 -o "$OUT/SMS8iMessage-$a"
+    -framework SwiftUI -framework AppKit -framework AuthenticationServices -framework Foundation -lsqlite3 -o "$OUT/SMS8iMessage-$a"
 done
 lipo -create "$OUT/SMS8iMessage-arm64" "$OUT/SMS8iMessage-x86_64" -output "$APP/Contents/MacOS/SMS8iMessage"
 rm -f "$OUT"/SMS8iMessage-*

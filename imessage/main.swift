@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import SQLite3
 import Network
+import AuthenticationServices
 
 // ============================================================================
 //  SMS8 iMessage Bridge — native macOS app
@@ -22,6 +23,77 @@ let REAL_HOME: URL = {
     return FileManager.default.homeDirectoryForCurrentUser
 }()
 let CHAT_DB   = REAL_HOME.appendingPathComponent("Library/Messages/chat.db").path
+
+// MARK: - Messages folder access (App Store sandbox)
+// The App Store build cannot read ~/Library/Messages on its own. The user
+// grants it once through the standard macOS folder picker; we keep a
+// read-only security-scoped bookmark and reopen it at every launch.
+// Full Disk Access is still required on top of it (macOS privacy protection).
+// The direct-download build is not sandboxed and skips all of this.
+enum MessagesFolder {
+    static let key = "messagesFolderBookmark"
+    static var isSandboxed: Bool { ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil }
+    private static var active: URL?
+    private static var folder: URL { REAL_HOME.appendingPathComponent("Library/Messages", isDirectory: true) }
+    static var needsGrant: Bool { isSandboxed && active == nil }
+
+    @discardableResult static func restore() -> Bool {
+        guard isSandboxed else { return true }
+        if active != nil { return true }
+        guard let data = UserDefaults.standard.data(forKey: key) else { return false }
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: data, options: [.withSecurityScope],
+                                 relativeTo: nil, bookmarkDataIsStale: &stale),
+              url.startAccessingSecurityScopedResource() else { return false }
+        active = url
+        if stale, let fresh = try? url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
+                                                    includingResourceValuesForKeys: nil, relativeTo: nil) {
+            UserDefaults.standard.set(fresh, forKey: key)
+        }
+        return true
+    }
+
+    /// Opens the folder picker already inside ~/Library/Messages; one click on Allow.
+    static func request(completion: @escaping (Bool) -> Void) {
+        let panel = NSOpenPanel()
+        panel.message = "To bring replies into your SMS8 inbox and confirm delivery, SMS8 Gateway needs to read your Messages folder. It is already selected. Click Allow."
+        panel.prompt = "Allow"
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.showsHiddenFiles = true
+        panel.directoryURL = folder
+        NSApp.activate(ignoringOtherApps: true)
+        panel.begin { resp in
+            guard resp == .OK, let url = panel.url,
+                  url.standardizedFileURL.resolvingSymlinksInPath().path == folder.standardizedFileURL.resolvingSymlinksInPath().path,
+                  let data = try? url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
+                                                   includingResourceValuesForKeys: nil, relativeTo: nil)
+            else { completion(false); return }
+            UserDefaults.standard.set(data, forKey: key)
+            completion(restore())
+        }
+    }
+}
+
+// MARK: - In-app sign-in sheet
+// Pages that need an SMS8 sign-in open in an in-app ASWebAuthenticationSession
+// sheet, not the default browser (App Review guideline 4).
+final class WebSignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = WebSignIn()
+    private var session: ASWebAuthenticationSession?
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+    }
+    func open(_ path: String) {
+        guard let url = URL(string: SMS8_BASE + path) else { return }
+        let s = ASWebAuthenticationSession(url: url, callbackURLScheme: "sms8gateway") { _, _ in }
+        s.presentationContextProvider = self
+        session = s
+        s.start()
+    }
+}
 
 // MARK: - Persistent state
 final class AppState: ObservableObject {
@@ -601,6 +673,7 @@ struct HealthIssue: Identifiable, Equatable {
         case notSignedIn         = "imessage_signed_out"
         case iMessageOff         = "imessage_off"
         case fullDiskMissing     = "full_disk_access_missing"
+        case messagesFolder      = "messages_folder_access"
     }
     let kind: Kind
     var id: String { kind.rawValue }
@@ -656,6 +729,13 @@ struct HealthIssue: Identifiable, Equatable {
                         "Turn on Enable this account.",
                         "Come back to this app. It checks again automatically."],
                 blocksSending: true)
+        case .messagesFolder:
+            return HealthIssue(kind: k, title: "Allow access to your Messages folder",
+                summary: "macOS asks you once to let SMS8 Gateway read your Messages folder. Without it, replies can't reach your SMS8 inbox and delivery can't be confirmed. Sending still works.",
+                steps: ["Click Choose Messages folder below.",
+                        "The Messages folder is already open in the window. Click Allow.",
+                        "If the app then asks for Full Disk Access, turn it on too."],
+                blocksSending: false)
         case .fullDiskMissing:
             return HealthIssue(kind: k, title: "Full Disk Access is off",
                 summary: "Without Full Disk Access, replies can't reach your SMS8 inbox, delivery can't be confirmed, and Auto mode can't fall back to SMS. Sending iMessage still works.",
@@ -693,6 +773,7 @@ final class HealthMonitor: ObservableObject {
     func startMonitoring() {
         guard !started else { return }
         started = true
+        MessagesFolder.restore()   // reopen the App Store folder grant, if any
         pathMonitor.pathUpdateHandler = { [weak self] p in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -786,7 +867,10 @@ final class HealthMonitor: ObservableObject {
             default: break
             }
         }
-        if (state.receiveEnabled || state.sendMode == .auto) && !fullDisk { out.append(.make(.fullDiskMissing)) }
+        if state.receiveEnabled || state.sendMode == .auto {
+            if MessagesFolder.needsGrant { out.append(.make(.messagesFolder)) }
+            else if !fullDisk { out.append(.make(.fullDiskMissing)) }
+        }
         if out != issues { issues = out }
     }
 
@@ -997,8 +1081,14 @@ final class Bridge: ObservableObject {
 }
 
 // MARK: - UI (tabbed, theme-aware)
-let BRAND = Color(red: 0.42, green: 0.0, blue: 0.88)      // SMS8 purple
-let BRAND_LIGHT = Color(red: 0.55, green: 0.3, blue: 0.95)
+// SMS8 brand (sms8.io look): ink black in light mode, slate gray in dark mode
+// (prominent buttons always draw white labels, so dark mode cannot use white).
+let BRAND = Color(nsColor: NSColor(name: nil) { a in
+    a.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        ? NSColor(srgbRed: 0.357, green: 0.396, blue: 0.412, alpha: 1)
+        : NSColor(srgbRed: 0.047, green: 0.063, blue: 0.071, alpha: 1)
+})
+let BRAND_LIGHT = Color(red: 0.545, green: 0.580, blue: 0.561)
 
 enum Tab: String, CaseIterable, Identifiable {
     case connection = "Connection", settings = "Settings", activity = "Activity"
@@ -1135,11 +1225,12 @@ struct RootView: View {
         case .automationDenied:  HealthMonitor.openSettings("com.apple.preference.security?Privacy_Automation")
         case .notSignedIn, .iMessageOff: HealthMonitor.launchMessages(activate: true)
         case .fullDiskMissing:   openFullDisk()
+        case .messagesFolder:    MessagesFolder.request { _ in health.refresh() }
         }
     }
     func performSecondary(_ k: HealthIssue.Kind) {
         switch k {
-        case .serverUnreachable: NSWorkspace.shared.open(URL(string: "https://app.sms8.io")!)
+        case .serverUnreachable: WebSignIn.shared.open("/")
         case .fullDiskMissing:   relaunchApp()
         default: health.refresh()
         }
@@ -1449,8 +1540,8 @@ struct RootView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(.vertical, 7).padding(.horizontal, 9)
-                    .background(tab == t ? BRAND.opacity(0.14) : .clear)
-                    .foregroundColor(tab == t ? BRAND : .primary)
+                    .background(tab == t ? Color.primary.opacity(0.08) : .clear)
+                    .foregroundColor(.primary)
                     .cornerRadius(8)
                 }.buttonStyle(.plain)
             }
@@ -1748,12 +1839,9 @@ struct RootView: View {
                         .font(.system(size: 11)).foregroundColor(.secondary)
                     // Both actions as inline links (no separate card).
                     HStack(spacing: 16) {
-                        Button { NSWorkspace.shared.open(URL(string: "https://app.sms8.io/devices")!) } label: {
-                            Text("Open Devices page").font(.system(size: 12)).underline()
-                        }.buttonStyle(.plain).foregroundColor(BRAND)
-                        Button { NSWorkspace.shared.open(URL(string: "https://app.sms8.io/register")!) } label: {
-                            Text("Create an account").font(.system(size: 12)).underline()
-                        }.buttonStyle(.plain).foregroundColor(BRAND)
+                        Button { WebSignIn.shared.open("/devices") } label: {
+                            Text("Sign in to see your code").font(.system(size: 12)).underline()
+                        }.buttonStyle(.plain).foregroundColor(.primary)
                     }.padding(.top, 2)
                 }
             }
@@ -1777,7 +1865,7 @@ struct RootView: View {
     var testPanel: some View {
         panel {
             HStack(spacing: 6) {
-                Image(systemName: "paperplane.fill").font(.system(size: 12)).foregroundColor(BRAND)
+                Image(systemName: "paperplane.fill").font(.system(size: 12)).foregroundColor(.primary)
                 Text("Send a test message").font(.system(size: 14, weight: .semibold))
             }
             // Styled input + send button pill.
@@ -2184,6 +2272,7 @@ struct IssueSheet: View {
         case .automationDenied:  return "Open Automation Settings"
         case .notSignedIn, .iMessageOff: return "Open Messages"
         case .fullDiskMissing:   return "Open Full Disk Access"
+        case .messagesFolder:    return "Choose Messages folder"
         }
     }
     var secondaryLabel: String {
@@ -2235,8 +2324,8 @@ struct SMS8BridgeApp: App {
             .windowResizability(.contentSize)
             .commands {
                 CommandGroup(replacing: .help) {
-                    Button("SMS8 Devices") { NSWorkspace.shared.open(URL(string: "https://app.sms8.io/devices")!) }
-                    Button("SMS8 Dashboard") { NSWorkspace.shared.open(URL(string: "https://app.sms8.io")!) }
+                    Button("SMS8 Devices") { WebSignIn.shared.open("/devices") }
+                    Button("SMS8 Dashboard") { WebSignIn.shared.open("/") }
                     Divider()
                     Button("Privacy Policy") { NSWorkspace.shared.open(URL(string: "https://sms8.io/privacy")!) }
                     Button("Terms of Service") { NSWorkspace.shared.open(URL(string: "https://sms8.io/terms")!) }
